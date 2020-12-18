@@ -1,0 +1,70 @@
+?start: (toplevel | singexpr)*
+
+?toplevel: meta | function | decorator
+
+?meta: "meta" NAME exprblock -> metadef
+?function: "def" NAME optsignature exprblock -> funcdef
+?decorator: "@" NAME optsignature exprblock -> decoratordef
+
+?optsignature: (signature)?
+
+?signature: "(" (vardec ("," vardec)?)? ")" (varsig)?
+?vardec: NAME (varsig)?
+?varsig: ":" vartype
+?vartype: NAME
+    | NAME list
+
+?accessor: "[" (singexpr (":" singexpr (":" singexpr)?)?)? "]"
+
+?statements: "{" statement* "}"
+
+?dict: "{" keyvalue ("," keyvalue)? "}"
+?keyvalue: (NUMBER|NAME|STRING) ":" singexpr
+?tuple: "(" (singexpr ",")+ ")"
+?list: "[" singexpr ("," singexpr)? "]"
+
+?statement: NAME "=" exprblock -> assignment
+    | "when" exprblock exprblock "else" exprblock -> whenexpr
+    | "return" exprblock -> return
+    | "while" exprblock exprblock -> whileexpr
+    | "for" NAME "in" exprblock exprblock -> forexpr
+    | "with" NAME "as" exprblock exprblock ->withexpr
+    | "break" (NAME)? -> break
+    | "continue" (NAME)? ->continue
+    | expression
+
+?exprblock: statements
+    | singexpr
+
+?singexpr: expression
+
+?expression: product
+    | "if" exprblock exprblock ("elif" exprblock exprblock)? "else" exprblock -> ifexpr
+    | expression "+" product -> add
+    | expression "-" product -> sub
+    | expression "==" product -> eq
+    | expression "!=" product -> neq
+
+?product: unary
+    | product "*" unary -> mul
+    | product "/" unary-> div
+
+?unary: "-" atom -> neg
+    | atom
+
+?atom: atom signature -> call
+    | atom accessor -> slice
+    | NUMBER -> number
+    | NAME -> var
+    | "(" expression ")"
+    | dict
+    | list
+    | tuple
+
+STRING: /".*"/
+
+%import common.CNAME -> NAME
+%import common.NUMBER
+%import common.WS
+%ignore WS
+%ignore "\n"
