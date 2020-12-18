@@ -42,7 +42,7 @@ class Codegen:
 
     def codegen_UnOp(self, node):
         lhs = self.codegen(node.lhs)
-        return lhs.aki.op(node.op)(lhs, None, self.builder)
+        return lhs.aki.op(node.op)(lhs, self.builder)
 
     def codegen_Integer(self, node):
         return Integer.llvm(node.value, 64)
