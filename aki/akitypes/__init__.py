@@ -61,18 +61,18 @@ class Boolean(IntegerBase):
     def typename(self):
         return f"bool"
 
-    def op_EQ(self, other, builder):
-        f = IRBuilder.icmp_unsigned(builder, Op.EQ.op, self, other)
+    def op_EQ(self, other, builder: IRBuilder):
+        f = builder.icmp_unsigned(Op.EQ.op, self, other)
         f.aki = Bool
         return f
 
-    def op_NEQ(self, other, builder):
-        f = IRBuilder.icmp_unsigned(builder, Op.NEQ.op, self, other)
+    def op_NEQ(self, other, builder: IRBuilder):
+        f = builder.icmp_unsigned(Op.NEQ.op, self, other)
         f.aki = Bool
         return f
 
-    def op_NEG(self, other, builder):
-        f = IRBuilder.xor(builder, Constant(self.type, 1), self)
+    def op_NEG(self, other, builder: IRBuilder):
+        f = builder.xor(Constant(self.type, 1), self)
         f.aki = Bool
         return f
 
@@ -83,27 +83,32 @@ Bool = Boolean(1)
 class Integer(IntegerBase):
     ctype = c_int64
 
-    def op_ADD(self, other, builder):
-        f = IRBuilder.add(builder, self, other)
+    def op_BOOL(self, other, builder: IRBuilder):
+        is_zero = builder.icmp_signed(Op.EQ.op, Constant(other.type, 0), other)
+        f = builder.select(is_zero, Constant(IntType(1), 0), Constant(IntType(1), 1))
+        return f
+
+    def op_ADD(self, other, builder: IRBuilder):
+        f = builder.add(self, other)
         f.aki = self.aki
         return f
 
-    def op_SUB(self, other, builder):
-        f = IRBuilder.sub(builder, self, other)
+    def op_SUB(self, other, builder: IRBuilder):
+        f = builder.sub(self, other)
         f.aki = self.aki
         return f
 
-    def op_EQ(self, other, builder):
-        f = IRBuilder.icmp_signed(builder, Op.EQ.op, self, other)
+    def op_EQ(self, other, builder: IRBuilder):
+        f = builder.icmp_signed(Op.EQ.op, self, other)
         f.aki = Bool
         return f
 
-    def op_NEQ(self, other, builder):
-        f = IRBuilder.icmp_signed(builder, Op.NEQ.op, self, other)
+    def op_NEQ(self, other, builder: IRBuilder):
+        f = builder.icmp_signed(Op.NEQ.op, self, other)
         f.aki = Bool
         return f
 
-    def op_NEG(self, other, builder):
-        f = IRBuilder.sub(builder, Constant(self.type, 0), self)
+    def op_NEG(self, other, builder: IRBuilder):
+        f = builder.sub(Constant(self.type, 0), self)
         f.aki = self.aki
         return f

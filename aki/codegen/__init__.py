@@ -57,10 +57,9 @@ class Codegen:
         if then_expr.aki != else_expr.aki:
             raise AkiTypeException("then/else expressions must yield same type")
 
-        # todo: check that types agree or can be nondestructively coerced
-
         if_expr = self.codegen(node.condition_expr)
-        # todo: if_expr should be boolified if not already so
+        if not isinstance(if_expr.aki, Boolean):
+            if_expr = if_expr.aki.op_BOOL(if_expr, self.builder)
 
         r = self.builder.select(if_expr, then_expr, else_expr)
         r.aki = then_expr.aki
