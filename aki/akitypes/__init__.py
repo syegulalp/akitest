@@ -32,6 +32,13 @@ class IntegerBase(AkiTypeBase):
 class Boolean(IntegerBase):
     ctype = c_bool
 
+    @classmethod
+    def llvm(cls, value, size):
+        val = 1 if value == "True" else 0
+        llvm_value = Constant(IntType(size), val)
+        llvm_value.aki = Bool
+        return llvm_value
+
     def __init__(self):
         self.size = 1
 

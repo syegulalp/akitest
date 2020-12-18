@@ -41,6 +41,16 @@ class Number(Node):
         return f"<Number: {self.value}>"
 
 
+class Integer(Number):
+    def __repr__(self):
+        return f"<Integer: {self.value}>"
+
+
+class Boolean(Number):
+    def __repr__(self):
+        return f"<Boolean: {self.value}>"
+
+
 class Name(Node):
     def __init__(self, pos, val):
         super().__init__(pos)

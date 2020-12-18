@@ -1,5 +1,5 @@
 from lark import Token
-from akitypes import Integer
+from akitypes import Integer, Boolean
 from llvmlite import ir
 
 
@@ -41,8 +41,11 @@ class Codegen:
         lhs = self.codegen(node.lhs)
         return lhs.aki.op(node.op)(lhs, None, self.builder)
 
-    def codegen_Number(self, node):
+    def codegen_Integer(self, node):
         return Integer.llvm(node.value, 64)
+
+    def codegen_Boolean(self, node):
+        return Boolean.llvm(node.value, 1)
 
     def codegen_IfExpr(self, node):
 
