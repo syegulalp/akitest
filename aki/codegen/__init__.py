@@ -45,7 +45,7 @@ class Codegen:
         return Integer.llvm(node.value, 64)
 
     def codegen_Boolean(self, node):
-        return Boolean.llvm(node.value, 1)
+        return Boolean.llvm(node.value)
 
     def codegen_IfExpr(self, node):
 
