@@ -20,4 +20,3 @@ class TestExpressions(BaseTest):
         self.ex("if 2==True 1 else 0", AkiTypeException)
         self.ex("if 2==True 1 else False", AkiTypeException)
         self.ex("if 2==2 1 else False", AkiTypeException)
-
