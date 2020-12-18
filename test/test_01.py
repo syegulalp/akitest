@@ -5,6 +5,8 @@ from errors import AkiTypeException
 class TestBaseValues(BaseTest):
     def test_boolean(self):
         self.eq("True", True)
+        self.eq("-False", True)
+        self.eq("-True", False)
 
     def test_integer(self):
         self.eq("2", 2)

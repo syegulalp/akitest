@@ -71,6 +71,10 @@ class Boolean(IntegerBase):
         f.aki = Bool
         return f
 
+    def op_NEG(self, other, builder):
+        f= IRBuilder.xor(builder, Constant(self.type, 1), self)
+        f.aki = Bool
+        return f
 
 Bool = Boolean(1)
 

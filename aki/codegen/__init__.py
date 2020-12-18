@@ -54,6 +54,9 @@ class Codegen:
 
         then_expr = self.codegen(node.then_expr)
         else_expr = self.codegen(node.else_expr)
+        if then_expr.aki != else_expr.aki:
+            raise AkiTypeException("then/else expressions must yield same type")
+
         # todo: check that types agree or can be nondestructively coerced
 
         if_expr = self.codegen(node.condition_expr)
