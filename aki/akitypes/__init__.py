@@ -142,6 +142,8 @@ class Integer(IntegerBase):
         f.aki = lhs.aki
         return f
 
+    # Comparisons
+
     def op_EQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
         f = builder.icmp_signed(Op.EQ.op, lhs, rhs)
         f.aki = Bool
@@ -149,5 +151,25 @@ class Integer(IntegerBase):
 
     def op_NEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
         f = builder.icmp_signed(Op.NEQ.op, lhs, rhs)
+        f.aki = Bool
+        return f
+
+    def op_GT(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.icmp_signed(Op.GT.op, lhs, rhs)
+        f.aki = Bool
+        return f
+
+    def op_LT(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.icmp_signed(Op.LT.op, lhs, rhs)
+        f.aki = Bool
+        return f
+
+    def op_GTEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.icmp_signed(Op.GTEQ.op, lhs, rhs)
+        f.aki = Bool
+        return f
+
+    def op_LTEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.icmp_signed(Op.LTEQ.op, lhs, rhs)
         f.aki = Bool
         return f

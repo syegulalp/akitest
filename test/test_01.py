@@ -2,6 +2,14 @@ from utils import BaseTest
 from errors import AkiTypeException
 
 
+class TestA(BaseTest):
+    def test_a(self):
+        self.eq("2>3", False)
+        self.eq("2<3", True)
+        self.eq("2<=3", True)
+        self.eq("2>=3", False)
+
+
 class TestBaseValues(BaseTest):
     def test_boolean(self):
         self.eq("True", True)

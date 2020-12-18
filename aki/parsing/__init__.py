@@ -39,6 +39,18 @@ class T(Transformer):
     def neq(self, node):
         return self.binop(node, Op.NEQ)
 
+    def gt(self, node):
+        return self.binop(node, Op.GT)
+
+    def lt(self, node):
+        return self.binop(node, Op.LT)
+
+    def gteq(self, node):
+        return self.binop(node, Op.GTEQ)
+
+    def lteq(self, node):
+        return self.binop(node, Op.LTEQ)
+
     def neg(self, node):
         return UnOp(pos(node[0]), node[0], Op.NEG)
 

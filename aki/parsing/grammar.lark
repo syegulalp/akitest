@@ -44,6 +44,10 @@
     | expression "-" product -> sub
     | expression "==" product -> eq
     | expression "!=" product -> neq
+    | expression ">=" product -> gteq
+    | expression "<=" product -> lteq
+    | expression ">" product -> gt
+    | expression "<" product -> lt
 
 ?product: unary
     | product "*" unary -> mul

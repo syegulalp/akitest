@@ -17,6 +17,18 @@ class Op:
     class NEG:
         op = "-"
 
+    class GT:
+        op = ">"
+
+    class LT:
+        op = "<"
+
+    class GTEQ:
+        op = ">="
+
+    class LTEQ:
+        op = "<="
+
 
 class Node:
     def __init__(self, pos):
@@ -64,7 +76,7 @@ class Name(Node):
 
 
 class Function(Node):
-    def __init__(self, pos, name:str, args: list, return_type: Node, body: Node):
+    def __init__(self, pos, name: str, args: list, return_type: Node, body: Node):
         super().__init__(pos)
         self.name = name
         self.args = args
@@ -80,6 +92,7 @@ class Function(Node):
 
     def __repr__(self):
         return f"<Function {self.name}: {self.return_type}: {self.body}>"
+
 
 class IfExpr(Node):
     def __init__(self, pos, condition_expr: Node, then_expr: Node, else_expr: Node):
@@ -101,8 +114,10 @@ class IfExpr(Node):
 
 class OpNode(Node):
     pass
+
+
 class BinOp(OpNode):
-    def __init__(self, pos, lhs: Node, rhs:Node, op: str):
+    def __init__(self, pos, lhs: Node, rhs: Node, op: str):
         super().__init__(pos)
         self.lhs = lhs
         self.rhs = rhs

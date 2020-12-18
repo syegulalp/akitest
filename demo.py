@@ -6,8 +6,7 @@ from parsing import parser
 from codegen import codegen
 from jitengine import jit
 
-commands = ["if -32 1 else 0"]
-#commands = ["True","2", "2+2", "2==2", "2==4", "if 32==2 0 else 1"]
+commands = ["True", "2", "2+2", "2==2", "2==4", "if 32==2 0 else 1"]
 
 for command in commands:
     ast = parser.parse(command)
