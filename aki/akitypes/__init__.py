@@ -1,11 +1,11 @@
 from llvmlite.ir.types import IntType
 from llvmlite.ir import Constant, IRBuilder, Value
-from akiast import Op
+from akiast import Op, OpNode
 from ctypes import c_bool, c_int64
 
 
 class AkiTypeBase:
-    def op(self, optype):
+    def op(self, optype: OpNode):
         return getattr(self, f"op_{optype.__name__}")
 
     def _zext(self, value: Value, target_type: "AkiTypeBase", builder: IRBuilder):
@@ -18,7 +18,7 @@ class IntegerBase(AkiTypeBase):
     _cache = {}
 
     @classmethod
-    def llvm(cls, value, size):
+    def llvm(cls, value: str, size: int):
         """
         Generates an LLVM Value object with the appropriate .aki object attached to it.
         """
@@ -27,7 +27,7 @@ class IntegerBase(AkiTypeBase):
         llvm_value.aki = Integer(size)
         return llvm_value
 
-    def __new__(cls, size):
+    def __new__(cls, size: int):
         """
         Use an existing, cached type if it already exists in our type cache.
         """
@@ -39,7 +39,7 @@ class IntegerBase(AkiTypeBase):
             return a
 
     @classmethod
-    def __new(cls, size):
+    def __new(cls, size: int):
         """
         Instantiates a new Integer type, with an .llvm_type attribute.
         """
@@ -47,7 +47,7 @@ class IntegerBase(AkiTypeBase):
         new.llvm_type = IntType(size)
         return new
 
-    def __init__(self, size):
+    def __init__(self, size: int):
         self.size = size
 
     @property
@@ -62,7 +62,7 @@ class Boolean(IntegerBase):
     ctype = c_bool
 
     @classmethod
-    def llvm(cls, value):
+    def llvm(cls, value: str):
         val = 1 if value == "True" else 0
         llvm_value = Constant(IntType(1), val)
         llvm_value.aki = Bool
