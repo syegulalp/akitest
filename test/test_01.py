@@ -42,3 +42,4 @@ class TestBaseComparisons(BaseTest):
 
     def test_illegal_comparison(self):
         self.ex("2==True", AkiTypeException)
+        self.ex("2!=True", AkiTypeException)
