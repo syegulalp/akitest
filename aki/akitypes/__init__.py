@@ -11,12 +11,26 @@ class AkiTypeBase:
 
 
 class IntegerBase(AkiTypeBase):
+    _cache = {}
     @classmethod
     def llvm(cls, value, size):
         val = int(value)
         llvm_value = Constant(IntType(size), val)
         llvm_value.aki = Integer(size)
         return llvm_value
+
+    def __new__(cls, size):
+        try:
+            return cls._cache[size]
+        except KeyError:
+            a = cls.__new(size)
+            cls._cache[size] = a
+            return a
+
+    @classmethod
+    def __new(cls, size):
+        new = AkiTypeBase.__new__(cls)
+        return new
 
     def __init__(self, size):
         self.size = size
@@ -32,7 +46,14 @@ class IntegerBase(AkiTypeBase):
 class Boolean(IntegerBase):
     ctype = c_bool
 
-    def __init__(self):
+    @classmethod
+    def llvm(cls, value):
+        val = 1 if value == "True" else 0
+        llvm_value = Constant(IntType(1), val)
+        llvm_value.aki = Bool
+        return llvm_value
+
+    def __init__(self, *a):
         self.size = 1
 
     @property
@@ -40,7 +61,7 @@ class Boolean(IntegerBase):
         return f"bool"
 
 
-Bool = Boolean()
+Bool = Boolean(1)
 
 
 class Integer(IntegerBase):

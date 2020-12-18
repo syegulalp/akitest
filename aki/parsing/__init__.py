@@ -2,7 +2,7 @@ import logging
 from lark import Lark, Transformer, logger
 
 logger.setLevel(logging.DEBUG)
-from akiast import Number, BinOp, UnOp, Op, Name, Function, IfExpr
+from akiast import Integer, Boolean, BinOp, UnOp, Op, Name, Function, IfExpr
 
 with open("aki\\parsing\\grammar.lark") as f:
     grammar = f.read()
@@ -18,7 +18,11 @@ class T(Transformer):
 
     def number(self, node):
         n = node[0]
-        return Number(pos(n), n.value)
+        return Integer(pos(n), n.value)
+
+    def bool(self, node):
+        n = node[0]
+        return Boolean(pos(n), n.value)
 
     def binop(self, node, op):
         return BinOp(pos(node[0]), node[0], node[1], op)

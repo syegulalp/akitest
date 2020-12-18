@@ -55,6 +55,7 @@
 ?atom: atom signature -> call
     | atom accessor -> slice
     | NUMBER -> number
+    | (TRUE|FALSE) -> bool
     | NAME -> var
     | "(" expression ")"
     | dict
@@ -62,6 +63,9 @@
     | tuple
 
 STRING: /".*"/
+
+TRUE: "True"
+FALSE: "False"
 
 %import common.CNAME -> NAME
 %import common.NUMBER

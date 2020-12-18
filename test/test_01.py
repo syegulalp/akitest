@@ -2,6 +2,9 @@ from utils import BaseTest
 
 
 class TestBaseValues(BaseTest):
+    def test_boolean(self):
+        self.eq("True", True)
+
     def test_integer(self):
         self.eq("2", 2)
         self.eq("-2", -2)
