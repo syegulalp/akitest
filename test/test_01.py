@@ -1,4 +1,5 @@
 from utils import BaseTest
+from errors import AkiTypeException
 
 
 class TestBaseValues(BaseTest):
@@ -21,6 +22,14 @@ class TestBaseOperations(BaseTest):
 
 
 class TestBaseComparisons(BaseTest):
+    def test_bool_eq_comp(self):
+        self.eq("True==True", True)
+        self.eq("False==False", True)
+
+    def test_bool_neq_comp(self):
+        self.eq("True!=False", True)
+        self.eq("True!=True", False)
+
     def test_int_eq_comp(self):
         self.eq("2==2", True)
         self.eq("2==4", False)
@@ -28,3 +37,6 @@ class TestBaseComparisons(BaseTest):
     def test_int_neq_comp(self):
         self.eq("2!=2", False)
         self.eq("2!=4", True)
+
+    def test_illegal_comparison(self):
+        self.ex("2==True", AkiTypeException)

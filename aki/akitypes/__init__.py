@@ -12,6 +12,7 @@ class AkiTypeBase:
 
 class IntegerBase(AkiTypeBase):
     _cache = {}
+
     @classmethod
     def llvm(cls, value, size):
         val = int(value)
@@ -59,6 +60,16 @@ class Boolean(IntegerBase):
     @property
     def typename(self):
         return f"bool"
+
+    def op_EQ(self, other, builder):
+        f = IRBuilder.icmp_unsigned(builder, Op.EQ.op, self, other)
+        f.aki = Bool
+        return f
+
+    def op_NEQ(self, other, builder):
+        f = IRBuilder.icmp_unsigned(builder, Op.NEQ.op, self, other)
+        f.aki = Bool
+        return f
 
 
 Bool = Boolean(1)

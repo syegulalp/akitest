@@ -1,6 +1,7 @@
 from lark import Token
 from akitypes import Integer, Boolean
 from llvmlite import ir
+from errors import AkiTypeException
 
 
 class Codegen:
@@ -35,6 +36,8 @@ class Codegen:
     def codegen_BinOp(self, node):
         lhs = self.codegen(node.lhs)
         rhs = self.codegen(node.rhs)
+        if lhs.aki != rhs.aki:
+            raise AkiTypeException("incompatible types for op")
         return lhs.aki.op(node.op)(lhs, rhs, self.builder)
 
     def codegen_UnOp(self, node):

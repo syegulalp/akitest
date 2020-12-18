@@ -1,7 +1,6 @@
 from parsing import parser
 from codegen import codegen
 from jitengine import jit
-
 import unittest
 
 
@@ -16,3 +15,7 @@ class BaseTest(unittest.TestCase):
 
     def eq(self, command, assertion):
         self.assertEqual(self.cmd(command), assertion)
+
+    def ex(self, command, exception):
+        with self.assertRaises(exception):
+            self.cmd(command)
