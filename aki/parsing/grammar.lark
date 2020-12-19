@@ -19,7 +19,7 @@
 ?statements: "{" statement* "}"
 
 ?dict: "{" keyvalue ("," keyvalue)? "}"
-?keyvalue: (NUMBER|NAME|STRING) ":" singexpr
+?keyvalue: (number|NAME|STRING) ":" singexpr
 ?tuple: "(" (singexpr ",")+ ")"
 ?list: "[" singexpr ("," singexpr)? "]"
 
@@ -40,35 +40,37 @@
 
 ?expression: comparison
     | "if" exprblock exprblock ("elif" exprblock exprblock)* ("else" exprblock)? -> ifexpr
-    | expression "==" comparison -> eq
-    | expression "!=" comparison -> neq
-    | expression ">=" comparison -> gteq
-    | expression "<=" comparison -> lteq
-    | expression ">" comparison -> gt
-    | expression "<" comparison -> lt
+    | expression comparisons comparison -> compop
     
+!comparisons: "==" | "!=" | ">=" | "<=" | ">" | "<"
+
 ?comparison: product
-    | comparison ">>" product -> rshift
-    | comparison "<<" product -> lshift
-    | comparison "+" product -> add
-    | comparison "-" product -> sub
-    | comparison "&" product -> bitand
-    | comparison "|" product -> bitor
-    | comparison "^" product -> bitxor
+    | comparison products product -> prodop
+
+!products: ">>" | "<<"| "+"|"-"| "&"|"|"|"^"
 
 ?product: unary
     | product "*" unary -> mul
     | product "/" unary-> div
 
-?unary: "-" atom_expr -> neg
+?unary: unops atom_expr -> unop
     | atom_expr
+
+!unops: "-"
 
 ?atom_expr: atom signature -> call
     | atom accessor -> slice
     | atom "." NAME -> attr 
     | atom
 
-?atom: FLOAT16 -> float16
+?atom: number
+    | NAME -> var
+    | "(" expression ")"
+    | dict
+    | list
+    | tuple
+
+number: FLOAT16 -> float16
     | FLOAT32 -> float32
     | FLOAT64 -> float64
     | INT64 -> signed_integer
@@ -76,11 +78,6 @@
     | INF -> inf
     | NAN -> nan
     | (TRUE|FALSE) -> bool
-    | NAME -> var
-    | "(" expression ")"
-    | dict
-    | list
-    | tuple
 
 STRING: /".*"/
 FLOAT64.1: /\d+\.\d*(_D)?/
@@ -95,7 +92,6 @@ TRUE: "True"
 FALSE: "False"
 
 %import common.CNAME -> NAME
-%import common.NUMBER
 %import common.WS
 %ignore WS
 %ignore "\n"

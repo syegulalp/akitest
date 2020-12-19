@@ -1,6 +1,6 @@
 from llvmlite.ir.types import IntType, DoubleType, FloatType, HalfType
 from llvmlite.ir import Constant, IRBuilder, Value
-from akiast import Op, OpNode
+from akiast import UnOps, BinOps, OpNode
 from ctypes import c_bool, c_double, c_float, c_uint16, c_int64, c_uint64
 from errors import AkiTypeException
 
@@ -104,12 +104,12 @@ class Boolean(IntegerBase):
         return target_type.__class__.op_ADD(f1, f2, builder)
 
     def op_EQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.icmp_unsigned(Op.EQ.op, lhs, rhs)
+        f = builder.icmp_unsigned(BinOps.EQ.op, lhs, rhs)
         f.aki = Bool
         return f
 
     def op_NEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.icmp_unsigned(Op.NEQ.op, lhs, rhs)
+        f = builder.icmp_unsigned(BinOps.NEQ.op, lhs, rhs)
         f.aki = Bool
         return f
 
@@ -123,7 +123,7 @@ class Integer(IntegerBase):
     # Unary ops
 
     def op_BOOL(self, lhs: Value, builder: IRBuilder):
-        is_zero = builder.icmp_signed(Op.EQ.op, Constant(lhs.type, 0), lhs)
+        is_zero = builder.icmp_signed(BinOps.EQ.op, Constant(lhs.type, 0), lhs)
         f = builder.select(is_zero, Constant(IntType(1), 0), Constant(IntType(1), 1))
         f.aki = Bool
         return f
@@ -173,32 +173,32 @@ class Integer(IntegerBase):
     # Comparisons
 
     def op_EQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.icmp_signed(Op.EQ.op, lhs, rhs)
+        f = builder.icmp_signed(BinOps.EQ.op, lhs, rhs)
         f.aki = Bool
         return f
 
     def op_NEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.icmp_signed(Op.NEQ.op, lhs, rhs)
+        f = builder.icmp_signed(BinOps.NEQ.op, lhs, rhs)
         f.aki = Bool
         return f
 
     def op_GT(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.icmp_signed(Op.GT.op, lhs, rhs)
+        f = builder.icmp_signed(BinOps.GT.op, lhs, rhs)
         f.aki = Bool
         return f
 
     def op_LT(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.icmp_signed(Op.LT.op, lhs, rhs)
+        f = builder.icmp_signed(BinOps.LT.op, lhs, rhs)
         f.aki = Bool
         return f
 
     def op_GTEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.icmp_signed(Op.GTEQ.op, lhs, rhs)
+        f = builder.icmp_signed(BinOps.GTEQ.op, lhs, rhs)
         f.aki = Bool
         return f
 
     def op_LTEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.icmp_signed(Op.LTEQ.op, lhs, rhs)
+        f = builder.icmp_signed(BinOps.LTEQ.op, lhs, rhs)
         f.aki = Bool
         return f
 
@@ -226,7 +226,7 @@ class UnsignedInteger(Integer):
     # Unary ops
 
     def op_BOOL(self, lhs: Value, builder: IRBuilder):
-        is_zero = builder.icmp_unsigned(Op.EQ.op, Constant(lhs.type, 0), lhs)
+        is_zero = builder.icmp_unsigned(BinOps.EQ.op, Constant(lhs.type, 0), lhs)
         f = builder.select(is_zero, Constant(IntType(1), 0), Constant(IntType(1), 1))
         f.aki = Bool
         return f
@@ -242,32 +242,32 @@ class UnsignedInteger(Integer):
     # Comparisons
 
     def op_EQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.icmp_unsigned(Op.EQ.op, lhs, rhs)
+        f = builder.icmp_unsigned(BinOps.EQ.op, lhs, rhs)
         f.aki = Bool
         return f
 
     def op_NEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.icmp_unsigned(Op.NEQ.op, lhs, rhs)
+        f = builder.icmp_unsigned(BinOps.NEQ.op, lhs, rhs)
         f.aki = Bool
         return f
 
     def op_GT(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.icmp_unsigned(Op.GT.op, lhs, rhs)
+        f = builder.icmp_unsigned(BinOps.GT.op, lhs, rhs)
         f.aki = Bool
         return f
 
     def op_LT(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.icmp_unsigned(Op.LT.op, lhs, rhs)
+        f = builder.icmp_unsigned(BinOps.LT.op, lhs, rhs)
         f.aki = Bool
         return f
 
     def op_GTEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.icmp_unsigned(Op.GTEQ.op, lhs, rhs)
+        f = builder.icmp_unsigned(BinOps.GTEQ.op, lhs, rhs)
         f.aki = Bool
         return f
 
     def op_LTEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.icmp_unsigned(Op.LTEQ.op, lhs, rhs)
+        f = builder.icmp_unsigned(BinOps.LTEQ.op, lhs, rhs)
         f.aki = Bool
         return f
 
@@ -325,32 +325,32 @@ class FloatBase(AkiTypeBase):
     # Comparisons
 
     def op_EQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.fcmp_ordered(Op.EQ.op, lhs, rhs)
+        f = builder.fcmp_ordered(BinOps.EQ.op, lhs, rhs)
         f.aki = Bool
         return f
 
     def op_NEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.fcmp_ordered(Op.NEQ.op, lhs, rhs)
+        f = builder.fcmp_ordered(BinOps.NEQ.op, lhs, rhs)
         f.aki = Bool
         return f
 
     def op_GT(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.fcmp_ordered(Op.GT.op, lhs, rhs)
+        f = builder.fcmp_ordered(BinOps.GT.op, lhs, rhs)
         f.aki = Bool
         return f
 
     def op_LT(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.fcmp_ordered(Op.LT.op, lhs, rhs)
+        f = builder.fcmp_ordered(BinOps.LT.op, lhs, rhs)
         f.aki = Bool
         return f
 
     def op_GTEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.fcmp_ordered(Op.GTEQ.op, lhs, rhs)
+        f = builder.fcmp_ordered(BinOps.GTEQ.op, lhs, rhs)
         f.aki = Bool
         return f
 
     def op_LTEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        f = builder.fcmp_ordered(Op.LTEQ.op, lhs, rhs)
+        f = builder.fcmp_ordered(BinOps.LTEQ.op, lhs, rhs)
         f.aki = Bool
         return f
 

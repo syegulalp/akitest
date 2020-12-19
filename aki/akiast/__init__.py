@@ -1,7 +1,10 @@
 from llvmlite.ir import IRBuilder
 
+class UnOps:
+    class NEG:
+        op = "-"
 
-class Op:
+class BinOps:
     class ADD:
         op = "+"
 
@@ -13,9 +16,6 @@ class Op:
 
     class NEQ:
         op = "!="
-
-    class NEG:
-        op = "-"
 
     class GT:
         op = ">"
@@ -43,6 +43,15 @@ class Op:
 
     class LSHIFT:
         op = "<<"   
+
+unops = {}
+binops = {}
+
+for _op, _Op in (unops,UnOps), (binops, BinOps):
+    for _ in _Op.__dict__.values():
+        op1 = getattr(_, "op",None)
+        if not op1: continue
+        _op[op1] = _
 
 
 class Node:
