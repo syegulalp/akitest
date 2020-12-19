@@ -17,9 +17,12 @@ class Codegen:
 
     def gen(self, ast):
         self.reset()
+        last = None
+        
         if not isinstance(ast, list):
             ast = [ast]
             last = ast
+        
         for node in ast:
             last = self.codegen(node)
 
@@ -57,7 +60,7 @@ class Codegen:
         if then_expr.aki != else_expr.aki:
             raise AkiTypeException("then/else expressions must yield same type")
 
-        if_expr = self.codegen(node.condition_expr)
+        if_expr = self.codegen(node.if_expr)
 
         # coerce to boolean if not already so
         if not isinstance(if_expr.aki, Boolean):
