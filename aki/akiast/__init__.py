@@ -110,21 +110,21 @@ class Function(Node):
 
 
 class IfExpr(Node):
-    def __init__(self, pos, condition_expr: Node, then_expr: Node, else_expr: Node):
+    def __init__(self, pos, if_expr: Node, then_expr: Node, else_expr: Node):
         super().__init__(pos)
-        self.condition_expr = condition_expr
+        self.if_expr = if_expr
         self.then_expr = then_expr
         self.else_expr = else_expr
 
     def __eq__(self, other: Node):
         return (
-            self.condition_expr == other.condition_expr
+            self.if_expr == other.condition_expr
             and self.then_expr == other.then_expr
             and self.else_expr == other.else_expr
         )
 
     def __repr__(self):
-        return f"<If {self.condition_expr}: {self.then_expr}: {self.else_expr}>"
+        return f"<If {self.if_expr}: {self.then_expr}: {self.else_expr}>"
 
 
 class OpNode(Node):
