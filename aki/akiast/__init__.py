@@ -29,6 +29,21 @@ class Op:
     class LTEQ:
         op = "<="
 
+    class BITAND:
+        op = "&"
+
+    class BITOR:
+        op = "|"        
+
+    class BITXOR:
+        op = "^"   
+
+    class RSHIFT:
+        op = ">>"   
+
+    class LSHIFT:
+        op = "<<"   
+
 
 class Node:
     def __init__(self, pos):

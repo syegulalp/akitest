@@ -54,6 +54,21 @@ class T(Transformer):
     def neg(self, node):
         return UnOp(pos(node[0]), node[0], Op.NEG)
 
+    def bitand(self, node):
+        return self.binop(node, Op.BITAND)
+
+    def bitor(self, node):
+        return self.binop(node, Op.BITOR)
+
+    def bitxor(self, node):
+        return self.binop(node, Op.BITXOR)
+
+    def rshift(self, node):
+        return self.binop(node, Op.RSHIFT)
+
+    def lshift(self, node):
+        return self.binop(node, Op.LSHIFT)
+
     def funcdef(self, node):
         p = pos(node[0])
         name = Name(p, node[0].value)

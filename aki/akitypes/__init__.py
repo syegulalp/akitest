@@ -13,7 +13,6 @@ class AkiTypeBase:
         f1.aki = target_type
         return f1
 
-
 class IntegerBase(AkiTypeBase):
     _cache = {}
 
@@ -89,6 +88,9 @@ class Boolean(IntegerBase):
 
     def op_ADD(self, lhs: Value, rhs: Value, builder: IRBuilder):
         target_type = Integer(64)
+        
+        # TODO: create a general mechanism for the coercion of certain type pairs? E.g., bool+int = int? or just have each base type implement conversions for other base types?
+
         f1 = self._zext(lhs, target_type.llvm_type, builder)
         f2 = self._zext(rhs, target_type.llvm_type, builder)
         return target_type.__class__.op_ADD(f1, f2, builder)
@@ -139,6 +141,31 @@ class Integer(IntegerBase):
 
     def op_SUB(self, lhs: Value, rhs: Value, builder: IRBuilder):
         f = builder.sub(lhs, rhs)
+        f.aki = lhs.aki
+        return f
+
+    def op_BITAND(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.and_(lhs, rhs)
+        f.aki = lhs.aki
+        return f
+
+    def op_BITOR(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.or_(lhs, rhs)
+        f.aki = lhs.aki
+        return f
+
+    def op_BITXOR(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.xor(lhs, rhs)
+        f.aki = lhs.aki
+        return f
+
+    def op_LSHIFT(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.shl(lhs, rhs)
+        f.aki = lhs.aki
+        return f
+
+    def op_RSHIFT(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.ashr(lhs, rhs)
         f.aki = lhs.aki
         return f
 

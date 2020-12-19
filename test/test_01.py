@@ -1,14 +1,18 @@
 from utils import BaseTest
 from errors import AkiTypeException
 
+all_binops = ('==','!=','>=','<=','>','<')
+all_unops = ("-")
 
 class TestA(BaseTest):
     def test_a(self):
-        self.eq("2>3", False)
-        self.eq("2<3", True)
-        self.eq("2<=3", True)
-        self.eq("2>=3", False)
-
+        self.eq("2 & 3", 2)
+        self.eq("2 | 3", 3)
+        self.eq("2 ^ 3", 1)
+        self.eq("2 << 2", 8)
+        self.eq("8 >> 3", 1)
+        self.eq("8 >> 5", 0)
+        # TODO: unsigned shifts
 
 class TestBaseValues(BaseTest):
     def test_boolean(self):
@@ -48,6 +52,12 @@ class TestBaseComparisons(BaseTest):
         self.eq("2!=2", False)
         self.eq("2!=4", True)
 
+    def test_int_gt_lt_comp(self):
+        self.eq("2>3", False)
+        self.eq("2<3", True)
+        self.eq("2<=3", True)
+        self.eq("2>=3", False)
+
     def test_illegal_comparison(self):
-        self.ex("2==True", AkiTypeException)
-        self.ex("2!=True", AkiTypeException)
+        for op in all_binops:
+            self.ex(f"2{op}True", AkiTypeException)

@@ -38,16 +38,23 @@
 
 ?singexpr: expression
 
-?expression: product
+?expression: comparison
     | "if" exprblock exprblock ("elif" exprblock exprblock)? "else" exprblock -> ifexpr
-    | expression "+" product -> add
-    | expression "-" product -> sub
-    | expression "==" product -> eq
-    | expression "!=" product -> neq
-    | expression ">=" product -> gteq
-    | expression "<=" product -> lteq
-    | expression ">" product -> gt
-    | expression "<" product -> lt
+    | expression "==" comparison -> eq
+    | expression "!=" comparison -> neq
+    | expression ">=" comparison -> gteq
+    | expression "<=" comparison -> lteq
+    | expression ">" comparison -> gt
+    | expression "<" comparison -> lt
+    
+?comparison: product
+    | comparison ">>" product -> rshift
+    | comparison "<<" product -> lshift
+    | comparison "+" product -> add
+    | comparison "-" product -> sub
+    | comparison "&" product -> bitand
+    | comparison "|" product -> bitor
+    | comparison "^" product -> bitxor
 
 ?product: unary
     | product "*" unary -> mul
