@@ -202,6 +202,8 @@ class Integer(IntegerBase):
         f.aki = Bool
         return f
 
+class SignedInteger(Integer):
+    pass
 
 class UnsignedInteger(Integer):
     ctype = c_uint64

@@ -23,7 +23,7 @@
 ?tuple: "(" (singexpr ",")+ ")"
 ?list: "[" singexpr ("," singexpr)? "]"
 
-?statement: NAME "=" exprblock -> assignment
+?statement: atom_expr "=" exprblock -> assignment
     | "when" exprblock exprblock "else" exprblock -> whenexpr
     | "return" exprblock -> return
     | "while" exprblock exprblock -> whileexpr
@@ -39,7 +39,7 @@
 ?singexpr: expression
 
 ?expression: comparison
-    | "if" exprblock exprblock ("elif" exprblock exprblock)? "else" exprblock -> ifexpr
+    | "if" exprblock exprblock ("elif" exprblock exprblock)* ("else" exprblock)? -> ifexpr
     | expression "==" comparison -> eq
     | expression "!=" comparison -> neq
     | expression ">=" comparison -> gteq
@@ -60,12 +60,21 @@
     | product "*" unary -> mul
     | product "/" unary-> div
 
-?unary: "-" atom -> neg
+?unary: "-" atom_expr -> neg
+    | atom_expr
+
+?atom_expr: atom signature -> call
+    | atom accessor -> slice
+    | atom "." NAME -> attr 
     | atom
 
-?atom: atom signature -> call
-    | atom accessor -> slice
-    | NUMBER -> number
+?atom: FLOAT16 -> float16
+    | FLOAT32 -> float32
+    | FLOAT64 -> float64
+    | INT64 -> signed_integer
+    | UINT64 -> unsigned_integer
+    | INF -> inf
+    | NAN -> nan
     | (TRUE|FALSE) -> bool
     | NAME -> var
     | "(" expression ")"
@@ -74,6 +83,13 @@
     | tuple
 
 STRING: /".*"/
+FLOAT64: /\d+\.\d*/ | /\d+\.\d*_D/
+FLOAT32: /\d+\.\d*_F/
+FLOAT16: /\d+\.\d*_H/
+INT64: /\d+/
+UINT64: /\d+_U/
+INF: ".INF"
+NAN: ".NAN"
 
 TRUE: "True"
 FALSE: "False"

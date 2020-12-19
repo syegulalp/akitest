@@ -1,5 +1,5 @@
 from lark import Token
-from akitypes import Integer, Boolean, UnsignedInteger, Float64, Float32, Float16
+from akitypes import Integer, Boolean, SignedInteger, UnsignedInteger, Float64, Float32, Float16
 from llvmlite import ir
 from errors import AkiTypeException
 
@@ -49,6 +49,9 @@ class Codegen:
 
     def codegen_Integer(self, node):
         return Integer.llvm(node.value, 64)
+    
+    def codegen_SignedInteger(self, node):
+        return SignedInteger.llvm(node.value, 64)
 
     def codegen_UnsignedInteger(self, node):
         return UnsignedInteger.llvm(node.value, 64)

@@ -30,10 +30,6 @@ class T(Transformer):
     def __init__(self):
         pass
 
-    def number(self, node):
-        n = node[0]
-        return Integer(pos(n), n.value)
-
     def signed_integer(self, node):
         n = node[0]
         return SignedInteger(pos(n), n.value)
