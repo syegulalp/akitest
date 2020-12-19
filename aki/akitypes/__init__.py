@@ -1,25 +1,42 @@
 from llvmlite.ir.types import IntType
-from llvmlite.ir import Constant, IRBuilder
-from akiast import Op
+from llvmlite.ir import Constant, IRBuilder, Value
+from akiast import Op, OpNode
 from ctypes import c_bool, c_int64
 
 
 class AkiTypeBase:
-    @classmethod
-    def op(cls, optype):
-        return getattr(cls, f"op_{optype.__name__}")
+    def op(self, optype: OpNode):
+        return getattr(self, f"op_{optype.__name__}")
 
+    def _zext(self, value: Value, target_type: "AkiTypeBase", builder: IRBuilder):
+        f1 = builder.zext(value, target_type.llvm_type)
+        f1.aki = target_type
+        return f1
 
 class IntegerBase(AkiTypeBase):
     _cache = {}
+<<<<<<< HEAD
+=======
+
+>>>>>>> dev
     @classmethod
-    def llvm(cls, value, size):
+    def llvm(cls, value: str, size: int):
+        """
+        Generates an LLVM Value object with the appropriate .aki object attached to it.
+        """
         val = int(value)
         llvm_value = Constant(IntType(size), val)
         llvm_value.aki = Integer(size)
         return llvm_value
 
+<<<<<<< HEAD
     def __new__(cls, size):
+=======
+    def __new__(cls, size: int):
+        """
+        Use an existing, cached type if it already exists in our type cache.
+        """
+>>>>>>> dev
         try:
             return cls._cache[size]
         except KeyError:
@@ -28,11 +45,23 @@ class IntegerBase(AkiTypeBase):
             return a
 
     @classmethod
+<<<<<<< HEAD
     def __new(cls, size):
         new = AkiTypeBase.__new__(cls)
         return new
 
     def __init__(self, size):
+=======
+    def __new(cls, size: int):
+        """
+        Instantiates a new Integer type, with an .llvm_type attribute.
+        """
+        new = AkiTypeBase.__new__(cls)
+        new.llvm_type = IntType(size)
+        return new
+
+    def __init__(self, size: int):
+>>>>>>> dev
         self.size = size
 
     @property
@@ -47,7 +76,11 @@ class Boolean(IntegerBase):
     ctype = c_bool
 
     @classmethod
+<<<<<<< HEAD
     def llvm(cls, value):
+=======
+    def llvm(cls, value: str):
+>>>>>>> dev
         val = 1 if value == "True" else 0
         llvm_value = Constant(IntType(1), val)
         llvm_value.aki = Bool
@@ -60,34 +93,132 @@ class Boolean(IntegerBase):
     def typename(self):
         return f"bool"
 
+    # Unary ops
 
+    def op_BOOL(self, lhs: Value, builder: IRBuilder):
+        return lhs
+
+    def op_NEG(self, lhs: Value, builder: IRBuilder):
+        f = builder.xor(Constant(self.llvm_type, 1), lhs)
+        f.aki = Bool
+        return f
+
+    # Binary ops
+
+    def op_ADD(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        target_type = Integer(64)
+        
+        # TODO: create a general mechanism for the coercion of certain type pairs? E.g., bool+int = int? or just have each base type implement conversions for other base types?
+
+<<<<<<< HEAD
+=======
+        f1 = self._zext(lhs, target_type.llvm_type, builder)
+        f2 = self._zext(rhs, target_type.llvm_type, builder)
+        return target_type.__class__.op_ADD(f1, f2, builder)
+
+    def op_SUB(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        target_type = Integer(64)
+        f1 = builder.zext(lhs, target_type.llvm_type)
+        f1.aki = target_type
+        f2 = builder.zext(rhs, target_type.llvm_type)
+        return target_type.__class__.op_ADD(f1, f2, builder)
+
+    def op_EQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.icmp_unsigned(Op.EQ.op, lhs, rhs)
+        f.aki = Bool
+        return f
+
+    def op_NEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.icmp_unsigned(Op.NEQ.op, lhs, rhs)
+        f.aki = Bool
+        return f
+
+
+>>>>>>> dev
 Bool = Boolean(1)
 
 
 class Integer(IntegerBase):
     ctype = c_int64
 
-    def op_ADD(self, other, builder):
-        f = IRBuilder.add(builder, self, other)
-        f.aki = self.aki
-        return f
+    # Unary ops
 
-    def op_SUB(self, other, builder):
-        f = IRBuilder.sub(builder, self, other)
-        f.aki = self.aki
-        return f
-
-    def op_EQ(self, other, builder):
-        f = IRBuilder.icmp_signed(builder, Op.EQ.op, self, other)
+    def op_BOOL(self, lhs: Value, builder: IRBuilder):
+        is_zero = builder.icmp_signed(Op.EQ.op, Constant(lhs.type, 0), lhs)
+        f = builder.select(is_zero, Constant(IntType(1), 0), Constant(IntType(1), 1))
         f.aki = Bool
         return f
 
-    def op_NEQ(self, other, builder):
-        f = IRBuilder.icmp_signed(builder, Op.NEQ.op, self, other)
+    def op_NEG(self, lhs: Value, builder: IRBuilder):
+        f = builder.sub(Constant(lhs.type, 0), lhs)
+        f.aki = lhs.aki
+        return f
+
+    # Binary ops
+
+    def op_ADD(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.add(lhs, rhs)
+        f.aki = lhs.aki
+        return f
+
+    def op_SUB(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.sub(lhs, rhs)
+        f.aki = lhs.aki
+        return f
+
+    def op_BITAND(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.and_(lhs, rhs)
+        f.aki = lhs.aki
+        return f
+
+    def op_BITOR(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.or_(lhs, rhs)
+        f.aki = lhs.aki
+        return f
+
+    def op_BITXOR(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.xor(lhs, rhs)
+        f.aki = lhs.aki
+        return f
+
+    def op_LSHIFT(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.shl(lhs, rhs)
+        f.aki = lhs.aki
+        return f
+
+    def op_RSHIFT(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.ashr(lhs, rhs)
+        f.aki = lhs.aki
+        return f
+
+    # Comparisons
+
+    def op_EQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.icmp_signed(Op.EQ.op, lhs, rhs)
         f.aki = Bool
         return f
 
-    def op_NEG(self, other, builder):
-        f = IRBuilder.sub(builder, Constant(self.type, 0), self)
-        f.aki = self.aki
+    def op_NEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.icmp_signed(Op.NEQ.op, lhs, rhs)
+        f.aki = Bool
+        return f
+
+    def op_GT(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.icmp_signed(Op.GT.op, lhs, rhs)
+        f.aki = Bool
+        return f
+
+    def op_LT(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.icmp_signed(Op.LT.op, lhs, rhs)
+        f.aki = Bool
+        return f
+
+    def op_GTEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.icmp_signed(Op.GTEQ.op, lhs, rhs)
+        f.aki = Bool
+        return f
+
+    def op_LTEQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.icmp_signed(Op.LTEQ.op, lhs, rhs)
+        f.aki = Bool
         return f
