@@ -67,12 +67,32 @@ class Number(Node):
     def __repr__(self):
         return f"<Number: {self.value}>"
 
+class Float(Number):
+    pass
+
+class Float16(Float):
+    def __repr__(self):
+        return f"<Float16: {self.value}>"
+
+class Float32(Float):
+    def __repr__(self):
+        return f"<Float32: {self.value}>"
+
+class Float64(Float):
+    def __repr__(self):
+        return f"<Float64: {self.value}>"
 
 class Integer(Number):
     def __repr__(self):
         return f"<Integer: {self.value}>"
 
+class SignedInteger(Integer):
+    def __repr__(self):
+        return f"<SignedInteger: {self.value}>"
 
+class UnsignedInteger(Integer):
+    def __repr__(self):
+        return f"<UnsignedInteger: {self.value}>"
 class Boolean(Number):
     def __repr__(self):
         return f"<Boolean: {self.value}>"

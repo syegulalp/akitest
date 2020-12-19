@@ -2,7 +2,21 @@ import logging
 from lark import Lark, Transformer, logger
 
 logger.setLevel(logging.DEBUG)
-from akiast import Integer, Boolean, BinOp, UnOp, Op, Name, Function, IfExpr
+from akiast import (
+    Integer,
+    Boolean,
+    BinOp,
+    UnOp,
+    Op,
+    Name,
+    Function,
+    IfExpr,
+    SignedInteger,
+    UnsignedInteger,
+    Float16,
+    Float32,
+    Float64
+)
 
 with open("aki\\parsing\\grammar.lark") as f:
     grammar = f.read()
@@ -19,6 +33,34 @@ class T(Transformer):
     def number(self, node):
         n = node[0]
         return Integer(pos(n), n.value)
+
+    def signed_integer(self, node):
+        n = node[0]
+        return SignedInteger(pos(n), n.value)
+
+    def unsigned_integer(self, node):
+        n = node[0]
+        return UnsignedInteger(pos(n), n.value)
+
+    def float16(self, node):
+        n = node[0]
+        return Float16(pos(n), n.value)   
+
+    def float32(self, node):
+        n = node[0]
+        return Float32(pos(n), n.value)    
+    
+    def float64(self, node):
+        n = node[0]
+        return Float64(pos(n), n.value)
+
+    def nan(self, node):
+        n = node[0]
+        return Float64(pos(n), "NaN")
+
+    def inf(self, node):
+        n = node[0]
+        return Float64(pos(n), "inf")
 
     def bool(self, node):
         n = node[0]

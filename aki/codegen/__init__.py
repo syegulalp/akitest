@@ -1,5 +1,5 @@
 from lark import Token
-from akitypes import Integer, Boolean
+from akitypes import Integer, Boolean, UnsignedInteger, Float64, Float32, Float16
 from llvmlite import ir
 from errors import AkiTypeException
 
@@ -8,15 +8,15 @@ class Codegen:
     def __init__(self):
         pass
 
-    def reset(self):
+    def reset(self, main_func="main"):
         self.module = ir.Module()
         main_func_type = ir.FunctionType(ir.IntType(64), [])
-        self.main_func = ir.Function(self.module, main_func_type, "main")
+        self.main_func = ir.Function(self.module, main_func_type, main_func)
         main_block = self.main_func.append_basic_block("entry")
         self.builder = ir.IRBuilder(main_block)
 
-    def gen(self, ast):
-        self.reset()
+    def gen(self, ast, main_func = "main"):
+        self.reset(main_func = main_func)
         last = None
         
         if not isinstance(ast, list):
@@ -50,6 +50,18 @@ class Codegen:
     def codegen_Integer(self, node):
         return Integer.llvm(node.value, 64)
 
+    def codegen_UnsignedInteger(self, node):
+        return UnsignedInteger.llvm(node.value, 64)
+
+    def codegen_Float16(self, node):
+        return Float16.llvm(node.value)
+
+    def codegen_Float32(self, node):
+        return Float32.llvm(node.value)
+
+    def codegen_Float64(self, node):
+        return Float64.llvm(node.value)
+    
     def codegen_Boolean(self, node):
         return Boolean.llvm(node.value)
 
