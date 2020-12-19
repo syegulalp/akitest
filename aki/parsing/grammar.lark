@@ -83,9 +83,9 @@
     | tuple
 
 STRING: /".*"/
-FLOAT64: /\d+\.\d*/ | /\d+\.\d*_D/
-FLOAT32: /\d+\.\d*_F/
-FLOAT16: /\d+\.\d*_H/
+FLOAT64.1: /\d+\.\d*(_D)?/
+FLOAT32.2: /\d+\.\d*_F/
+FLOAT16.2: /\d+\.\d*_H/
 INT64: /\d+/
 UINT64: /\d+_U/
 INF: ".INF"

@@ -24,6 +24,7 @@ class Codegen:
             last = ast
         
         for node in ast:
+            # print (node)
             last = self.codegen(node)
 
         if self.main_func.return_value.type != last.type:
