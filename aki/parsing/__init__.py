@@ -2,7 +2,20 @@ import logging
 from lark import Lark, Transformer, logger
 
 logger.setLevel(logging.DEBUG)
-from akiast import Integer, Boolean, BinOp, UnOp, Op, Name, Function, IfExpr
+from akiast import (
+    Boolean,
+    BinOp,
+    UnOp,
+    unops, binops,
+    Name,
+    Function,
+    IfExpr,
+    SignedInteger,
+    UnsignedInteger,
+    Float16,
+    Float32,
+    Float64
+)
 
 with open("aki\\parsing\\grammar.lark") as f:
     grammar = f.read()
@@ -11,68 +24,59 @@ with open("aki\\parsing\\grammar.lark") as f:
 def pos(n):
     return (n.line, n.column)
 
+def _p(n, value = None):
+    return (n[0].line, n[0].column), n[0].value if not value else value
+
 
 class T(Transformer):
     def __init__(self):
         pass
 
-    def number(self, node):
+    def signed_integer(self, node):
+        return SignedInteger(*_p(node))
+
+    def unsigned_integer(self, node):
+        return UnsignedInteger(*_p(node))
+
+    def float16(self, node):
+        return Float16(*_p(node))
+
+    def float32(self, node):
+        return Float32(*_p(node))
+    
+    def float64(self, node):
+        return Float64(*_p(node))
+
+    def nan(self, node):
+        return Float64(*_p(node, value="NaN"))
+
+    def inf(self, node):
         n = node[0]
-        return Integer(pos(n), n.value)
+        return Float64(*_p(node, value="inf"))
 
     def bool(self, node):
-        n = node[0]
-        return Boolean(pos(n), n.value)
+        return Boolean(*_p(node))
 
     def binop(self, node, op):
-        return BinOp(pos(node[0]), node[0], node[1], op)
+        return BinOp(pos(node[0]), node[0], node[2], op)
 
-    def add(self, node):
-        return self.binop(node, Op.ADD)
+    def unop(self, node):
+        return UnOp(pos(node[1]), node[1], unops[node[0]])
 
-    def sub(self, node):
-        return self.binop(node, Op.SUB)
+    def compop(self, node):
+        return self.binop(node, binops[node[1]])
 
-    def eq(self, node):
-        return self.binop(node, Op.EQ)
+    prodop = compop
 
-    def neq(self, node):
-        return self.binop(node, Op.NEQ)
+    def comparisons(self, node):
+        return node[0].value
 
-    def gt(self, node):
-        return self.binop(node, Op.GT)
-
-    def lt(self, node):
-        return self.binop(node, Op.LT)
-
-    def gteq(self, node):
-        return self.binop(node, Op.GTEQ)
-
-    def lteq(self, node):
-        return self.binop(node, Op.LTEQ)
-
-    def neg(self, node):
-        return UnOp(pos(node[0]), node[0], Op.NEG)
-
-    def bitand(self, node):
-        return self.binop(node, Op.BITAND)
-
-    def bitor(self, node):
-        return self.binop(node, Op.BITOR)
-
-    def bitxor(self, node):
-        return self.binop(node, Op.BITXOR)
-
-    def rshift(self, node):
-        return self.binop(node, Op.RSHIFT)
-
-    def lshift(self, node):
-        return self.binop(node, Op.LSHIFT)
+    unops = products = comparisons
 
     def funcdef(self, node):
-        p = pos(node[0])
-        name = Name(p, node[0].value)
-        return Function(p, name, [], None, node[2])
+        p = _p(node)
+        name = Name(*p)
+        return Function(p[0], name, [], None, node[2])
 
     def statements(self, node):
         return node

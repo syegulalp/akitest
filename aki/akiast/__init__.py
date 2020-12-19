@@ -1,7 +1,10 @@
 from llvmlite.ir import IRBuilder
 
+class UnOps:
+    class NEG:
+        op = "-"
 
-class Op:
+class BinOps:
     class ADD:
         op = "+"
 
@@ -13,9 +16,6 @@ class Op:
 
     class NEQ:
         op = "!="
-
-    class NEG:
-        op = "-"
 
     class GT:
         op = ">"
@@ -44,6 +44,15 @@ class Op:
     class LSHIFT:
         op = "<<"   
 
+unops = {}
+binops = {}
+
+for _op, _Op in (unops,UnOps), (binops, BinOps):
+    for _ in _Op.__dict__.values():
+        op1 = getattr(_, "op",None)
+        if not op1: continue
+        _op[op1] = _
+
 
 class Node:
     def __init__(self, pos):
@@ -67,12 +76,32 @@ class Number(Node):
     def __repr__(self):
         return f"<Number: {self.value}>"
 
+class Float(Number):
+    pass
+
+class Float16(Float):
+    def __repr__(self):
+        return f"<Float16: {self.value}>"
+
+class Float32(Float):
+    def __repr__(self):
+        return f"<Float32: {self.value}>"
+
+class Float64(Float):
+    def __repr__(self):
+        return f"<Float64: {self.value}>"
 
 class Integer(Number):
     def __repr__(self):
         return f"<Integer: {self.value}>"
 
+class SignedInteger(Integer):
+    def __repr__(self):
+        return f"<SignedInteger: {self.value}>"
 
+class UnsignedInteger(Integer):
+    def __repr__(self):
+        return f"<UnsignedInteger: {self.value}>"
 class Boolean(Number):
     def __repr__(self):
         return f"<Boolean: {self.value}>"
@@ -110,21 +139,21 @@ class Function(Node):
 
 
 class IfExpr(Node):
-    def __init__(self, pos, condition_expr: Node, then_expr: Node, else_expr: Node):
+    def __init__(self, pos, if_expr: Node, then_expr: Node, else_expr: Node):
         super().__init__(pos)
-        self.condition_expr = condition_expr
+        self.if_expr = if_expr
         self.then_expr = then_expr
         self.else_expr = else_expr
 
     def __eq__(self, other: Node):
         return (
-            self.condition_expr == other.condition_expr
+            self.if_expr == other.condition_expr
             and self.then_expr == other.then_expr
             and self.else_expr == other.else_expr
         )
 
     def __repr__(self):
-        return f"<If {self.condition_expr}: {self.then_expr}: {self.else_expr}>"
+        return f"<If {self.if_expr}: {self.then_expr}: {self.else_expr}>"
 
 
 class OpNode(Node):
