@@ -6,25 +6,28 @@ from akiast import (
     Boolean,
     BinOp,
     UnOp,
-    unops, binops,
+    unops,
+    binops,
     Name,
     Function,
     IfExpr,
+    WhenExpr,
     SignedInteger,
     UnsignedInteger,
     Float16,
     Float32,
-    Float64
+    Float64,
 )
-
-with open("aki\\parsing\\grammar.lark") as f:
-    grammar = f.read()
 
 
 def pos(n):
     return (n.line, n.column)
 
 def _p(n, value = None):
+    return (n[0].line, n[0].column), n[0].value if not value else value
+
+
+def _p(n, value=None):
     return (n[0].line, n[0].column), n[0].value if not value else value
 
 
@@ -43,7 +46,6 @@ class T(Transformer):
 
     def float32(self, node):
         return Float32(*_p(node))
-    
     def float64(self, node):
         return Float64(*_p(node))
 
@@ -66,12 +68,12 @@ class T(Transformer):
     def compop(self, node):
         return self.binop(node, binops[node[1]])
 
-    prodop = compop
+    muldivop = prodop = compop
 
     def comparisons(self, node):
         return node[0].value
 
-    unops = products = comparisons
+    muldivs = unops = products = comparisons
 
     def funcdef(self, node):
         p = _p(node)
@@ -84,5 +86,18 @@ class T(Transformer):
     def ifexpr(self, node):
         return IfExpr(pos(node[0]), node[0], node[1], node[2])
 
+    def whenexpr(self, node):
+        return WhenExpr(pos(node[0]), node[0], node[1], node[2])
 
-parser = Lark(grammar, parser="lalr", debug=False, transformer=T())
+with open(".\\aki\\parsing\\grammar.lark") as f:
+    grammar = f.read()
+
+parser = Lark(
+    grammar,
+    parser="lalr",
+    regex=True,
+    cache=".\\aki\\grammar.cache",
+    start=["start","statement"],
+    debug=False,
+    transformer=T()
+)

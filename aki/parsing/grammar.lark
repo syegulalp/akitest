@@ -1,45 +1,30 @@
-?start: (toplevel | singexpr)*
+?start: toplevel*
 
-?toplevel: meta | function | decorator
+?toplevel: function | decorator | exprblock
 
-?meta: "meta" NAME exprblock -> metadef
 ?function: "def" NAME optsignature exprblock -> funcdef
 ?decorator: "@" NAME optsignature exprblock -> decoratordef
 
-?optsignature: (signature)?
+?exprblock: statementblock
+    | singexpr
 
-?signature: "(" (vardec ("," vardec)?)? ")" (varsig)?
-?vardec: NAME (varsig)?
-?varsig: ":" vartype
-?vartype: NAME
-    | NAME list
+?statementblock: "{" statements "}"
+?statements: statement*
 
-?accessor: "[" (singexpr (":" singexpr (":" singexpr)?)?)? "]"
-
-?statements: "{" statement* "}"
-
-?dict: "{" keyvalue ("," keyvalue)? "}"
-?keyvalue: (number|NAME|STRING) ":" singexpr
-?tuple: "(" (singexpr ",")+ ")"
-?list: "[" singexpr ("," singexpr)? "]"
-
-?statement: atom_expr "=" exprblock -> assignment
-    | "when" exprblock exprblock "else" exprblock -> whenexpr
+?statement: "if" exprblock exprblock ("else" exprblock)? -> ifexpr
+    | "when" exprblock exprblock ("else" exprblock)? -> whenexpr
     | "return" exprblock -> return
     | "while" exprblock exprblock -> whileexpr
     | "for" NAME "in" exprblock exprblock -> forexpr
     | "with" NAME "as" exprblock exprblock ->withexpr
     | "break" (NAME)? -> break
     | "continue" (NAME)? ->continue
+    | atom_expr "=" exprblock -> assignment
     | expression
-
-?exprblock: statements
-    | singexpr
 
 ?singexpr: expression
 
 ?expression: comparison
-    | "if" exprblock exprblock ("elif" exprblock exprblock)* ("else" exprblock)? -> ifexpr
     | expression comparisons comparison -> compop
     
 !comparisons: "==" | "!=" | ">=" | "<=" | ">" | "<"
@@ -47,11 +32,12 @@
 ?comparison: product
     | comparison products product -> prodop
 
-!products: ">>" | "<<"| "+"|"-"| "&"|"|"|"^"
+!products: ">>" | "<<" | "+" | "-" | "&" | "|" | "^"
 
 ?product: unary
-    | product "*" unary -> mul
-    | product "/" unary-> div
+    | product muldivs unary -> muldivop
+
+!muldivs: "*"|"/"
 
 ?unary: unops atom_expr -> unop
     | atom_expr
@@ -79,12 +65,34 @@ number: FLOAT16 -> float16
     | NAN -> nan
     | (TRUE|FALSE) -> bool
 
+?optsignature: (signature)?
+
+?signature: "(" (vardec ("," vardec)?)? ")" (varsig)?
+?vardec: NAME (varsig)?
+?varsig: ":" vartype
+?vartype: NAME
+    | NAME list
+
+?accessor: "[" (singexpr (":" singexpr (":" singexpr)?)?)? "]"
+
+?dict: "{" keyvalue ("," keyvalue)? "}"
+?keyvalue: (number|NAME|STRING) ":" singexpr
+?tuple: "(" (singexpr ",")+ ")"
+?list: "[" singexpr ("," singexpr)? "]"
+
+
 STRING: /".*"/
 FLOAT64.1: /\d+\.\d*(_D)?/
 FLOAT32.2: /\d+\.\d*_F/
 FLOAT16.2: /\d+\.\d*_H/
 INT64: /\d+/
 UINT64: /\d+_U/
+INT32: /\d+_I32/
+UINT32: /\d+_U32/
+INT16: /\d+_I16/
+UINT16: /\d+_U16/
+BYTE: /\d+_I8/
+UBYTE: /\d+_U8/
 INF: ".INF"
 NAN: ".NAN"
 

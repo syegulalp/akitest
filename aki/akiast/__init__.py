@@ -4,12 +4,23 @@ class UnOps:
     class NEG:
         op = "-"
 
+class UnOps:
+    class NEG:
+        op = "-"
+
+
 class BinOps:
     class ADD:
         op = "+"
 
     class SUB:
         op = "-"
+
+    class MUL:
+        op = "*"
+
+    class DIV:
+        op = "/"
 
     class EQ:
         op = "=="
@@ -33,16 +44,27 @@ class BinOps:
         op = "&"
 
     class BITOR:
-        op = "|"        
+        op = "|"
 
     class BITXOR:
-        op = "^"   
+        op = "^"
 
     class RSHIFT:
-        op = ">>"   
+        op = ">>"
 
     class LSHIFT:
-        op = "<<"   
+        op = "<<"
+
+
+unops = {}
+binops = {}
+
+for _op, _Op in (unops, UnOps), (binops, BinOps):
+    for _ in _Op.__dict__.values():
+        op1 = getattr(_, "op", None)
+        if not op1:
+            continue
+        _op[op1] = _
 
 unops = {}
 binops = {}
@@ -76,32 +98,41 @@ class Number(Node):
     def __repr__(self):
         return f"<Number: {self.value}>"
 
+
 class Float(Number):
     pass
+
 
 class Float16(Float):
     def __repr__(self):
         return f"<Float16: {self.value}>"
 
+
 class Float32(Float):
     def __repr__(self):
         return f"<Float32: {self.value}>"
+
 
 class Float64(Float):
     def __repr__(self):
         return f"<Float64: {self.value}>"
 
+
 class Integer(Number):
     def __repr__(self):
         return f"<Integer: {self.value}>"
+
 
 class SignedInteger(Integer):
     def __repr__(self):
         return f"<SignedInteger: {self.value}>"
 
+
 class UnsignedInteger(Integer):
     def __repr__(self):
         return f"<UnsignedInteger: {self.value}>"
+
+
 class Boolean(Number):
     def __repr__(self):
         return f"<Boolean: {self.value}>"
@@ -155,6 +186,10 @@ class IfExpr(Node):
     def __repr__(self):
         return f"<If {self.if_expr}: {self.then_expr}: {self.else_expr}>"
 
+
+class WhenExpr(IfExpr):
+    def __repr__(self):
+        return f"<When {self.if_expr}: {self.then_expr}: {self.else_expr}>"
 
 class OpNode(Node):
     pass

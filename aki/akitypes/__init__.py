@@ -1,5 +1,5 @@
 from llvmlite.ir.types import IntType, DoubleType, FloatType, HalfType
-from llvmlite.ir import Constant, IRBuilder, Value
+from llvmlite.ir import Constant, IRBuilder, Value, Type
 from akiast import UnOps, BinOps, OpNode
 from ctypes import c_bool, c_double, c_float, c_uint16, c_int64, c_uint64
 from errors import AkiTypeException
@@ -17,6 +17,30 @@ class AkiTypeBase:
     def __repr__(self):
         return f"<{self.typename}>"
 
+    def ptr(self, pointee, builder: IRBuilder):
+        ptr = AkiPtr(pointee)
+        ptr.alloca(builder)
+        return ptr
+
+# this so far is only used for internal LLVM pointers.
+# it's not an actual *pointer* type.
+class AkiPtr(AkiTypeBase):
+    def __init__(self, pointee):
+        self.pointee = pointee
+
+    def alloca(self, builder: IRBuilder):
+        self.allocation = builder.alloca(self.pointee.type)
+        return self.allocation
+
+    def store(self, value, builder: IRBuilder):
+        builder.store(value, self.allocation)
+
+    def load(self, builder: IRBuilder):
+        result = builder.load(self.allocation)
+        result.aki = self.pointee.aki
+        return result
+
+
 class IntegerBase(AkiTypeBase):
     _cache = {}
 
@@ -27,7 +51,7 @@ class IntegerBase(AkiTypeBase):
         """
         val = int(value)
         llvm_value = Constant(IntType(size), val)
-        llvm_value.aki = Integer(size)
+        llvm_value.aki = cls(size)
         return llvm_value
 
     def __new__(cls, size: int):
@@ -88,7 +112,7 @@ class Boolean(IntegerBase):
     # Binary ops
 
     def op_ADD(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        target_type = Integer(64)
+        target_type = SignedInteger(64)
 
         # TODO: create a general mechanism for the coercion of certain type pairs? E.g., bool+int = int? or just have each base type implement conversions for other base types?
 
@@ -97,7 +121,7 @@ class Boolean(IntegerBase):
         return target_type.__class__.op_ADD(f1, f2, builder)
 
     def op_SUB(self, lhs: Value, rhs: Value, builder: IRBuilder):
-        target_type = Integer(64)
+        target_type = SignedInteger(64)
         f1 = builder.zext(lhs, target_type.llvm_type)
         f1.aki = target_type
         f2 = builder.zext(rhs, target_type.llvm_type)
@@ -142,6 +166,11 @@ class Integer(IntegerBase):
 
     def op_SUB(self, lhs: Value, rhs: Value, builder: IRBuilder):
         f = builder.sub(lhs, rhs)
+        f.aki = lhs.aki
+        return f
+
+    def op_MUL(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.mul(lhs, rhs)
         f.aki = lhs.aki
         return f
 
@@ -202,8 +231,13 @@ class Integer(IntegerBase):
         f.aki = Bool
         return f
 
+
 class SignedInteger(Integer):
-    pass
+    def op_DIV(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.sdiv(lhs, rhs)
+        f.aki = lhs.aki
+        return f
+
 
 class UnsignedInteger(Integer):
     ctype = c_uint64
@@ -222,6 +256,11 @@ class UnsignedInteger(Integer):
         llvm_value = Constant(IntType(size), val)
         llvm_value.aki = UnsignedInteger(size)
         return llvm_value
+
+    def op_DIV(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.udiv(lhs, rhs)
+        f.aki = lhs.aki
+        return f
 
     # Unary ops
 
@@ -300,15 +339,20 @@ class FloatBase(AkiTypeBase):
     def __new(cls, size: int):
         new = AkiTypeBase.__new__(cls)
         new.size = size
-        return new    
-    
+        return new
+
     # Unary ops
 
     def op_NEG(self, lhs: Value, builder: IRBuilder):
         f = builder.fsub(Constant(lhs.type, 0), lhs)
         f.aki = lhs.aki
-        return f        
+        return f
 
+    def op_BOOL(self, lhs: Value, builder: IRBuilder):
+        is_zero = builder.fcmp_ordered(BinOps.EQ.op, Constant(lhs.type, 0.0), lhs)
+        f = builder.select(is_zero, Constant(IntType(1), 0), Constant(IntType(1), 1))
+        f.aki = Bool
+        return f
 
     # Binary ops
 
@@ -320,7 +364,17 @@ class FloatBase(AkiTypeBase):
     def op_SUB(self, lhs: Value, rhs: Value, builder: IRBuilder):
         f = builder.fsub(lhs, rhs)
         f.aki = lhs.aki
-        return f        
+        return f
+
+    def op_MUL(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.fmul(lhs, rhs)
+        f.aki = lhs.aki
+        return f
+
+    def op_DIV(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.fdiv(lhs, rhs)
+        f.aki = lhs.aki
+        return f
 
     # Comparisons
 
@@ -354,6 +408,7 @@ class FloatBase(AkiTypeBase):
         f.aki = Bool
         return f
 
+
 class Float64(FloatBase):
     ctype = c_double
 
@@ -362,10 +417,11 @@ class Float64(FloatBase):
         val = float(value)
         llvm_value = Constant(DoubleType(), val)
         llvm_value.aki = Float64(64)
-        return llvm_value    
-   
+        return llvm_value
+
     def __init__(self, *a):
         self.llvm_type = DoubleType()
+
 
 class Float32(FloatBase):
     ctype = c_float
@@ -375,10 +431,11 @@ class Float32(FloatBase):
         val = float(value[:2])
         llvm_value = Constant(FloatType(), val)
         llvm_value.aki = Float32(32)
-        return llvm_value    
-   
+        return llvm_value
+
     def __init__(self, *a):
-        self.llvm_type = FloatType()        
+        self.llvm_type = FloatType()
+
 
 class Float16(FloatBase):
     ctype = c_uint16
@@ -388,7 +445,7 @@ class Float16(FloatBase):
         val = float(value[:2])
         llvm_value = Constant(HalfType(), val)
         llvm_value.aki = Float16(16)
-        return llvm_value    
-   
+        return llvm_value
+
     def __init__(self, *a):
         self.llvm_type = HalfType()
