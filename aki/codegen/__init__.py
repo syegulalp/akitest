@@ -58,7 +58,7 @@ class Codegen:
 
             self.codegen(main_func)
 
-    def return_value(self, entry_point = "main"):
+    def return_value(self, entry_point="main"):
         return self.module.globals[entry_point].ftype.return_type
 
     def codegen(self, node):
@@ -135,7 +135,7 @@ class Codegen:
 
         # compare body result type to default return type
         # correct if needed
-    
+
         if func_return_type_llvm.aki != body_result.type.aki:
             func.type = ir.FunctionType(body_result.type, [])
             func.return_value.type = body_result.type
@@ -158,7 +158,7 @@ class Codegen:
         # return the return value in the exit block
         self.builder.position_at_start(exit_block)
         self.builder.ret(self.builder.load(return_value))
-        
+
         # clear function context
         self.func_context = None
 

@@ -74,10 +74,12 @@ class Node:
     def __repr__(self):
         raise NotImplementedError
 
+
 class Immediate(Node):
     def __init__(self, pos, nodes):
         super().__init__(pos)
         self.nodes = nodes
+
 
 class Number(Node):
     def __init__(self, pos, value: str):
@@ -141,9 +143,11 @@ class Name(Node):
     def __repr__(self):
         return f"<Name {self.value}>"
 
+
 class VarRef(Name):
     def __repr__(self):
         return f"<VarRef {self.value}>"
+
 
 class Function(Node):
     def __init__(self, pos, name: str, args: list, return_type: Node, body: Node):
@@ -171,12 +175,11 @@ class Call(Node):
         self.args = args
 
     def __eq__(self, other: Node):
-        return (
-            self.args == other.args
-        )
+        return self.args == other.args
 
     def __repr__(self):
         return f"<Call {self.name}: {self.args}>"
+
 
 class IfExpr(Node):
     def __init__(self, pos, if_expr: Node, then_expr: Node, else_expr: Node):

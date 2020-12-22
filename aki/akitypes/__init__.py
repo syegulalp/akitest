@@ -49,7 +49,6 @@ class AkiPtr(AkiTypeBase):
 
 
 class IntegerBase(AkiTypeBase):
-
     @classmethod
     def llvm_value(cls, value: str, size: int):
         """

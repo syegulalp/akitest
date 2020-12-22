@@ -16,11 +16,11 @@ class BaseTest(unittest.TestCase):
         codegen.reset()
         # main_func_name = f"main_{BaseTest.incr}"
         codegen.gen(ast)
-        #print (str(codegen.module))
+        # print (str(codegen.module))
         # print (codegen.return_value.aki)
         result = jit.execute(codegen, entry_point=codegen.anon_counter())
         jit.clear()
-        
+
         # BaseTest.incr+=1
         return result
 
