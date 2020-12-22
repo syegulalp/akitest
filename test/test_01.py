@@ -14,6 +14,7 @@ class TestA(BaseTest):
 class TestBaseValues(BaseTest):
     def test_boolean(self):
         self.eq("True", True)
+        self.eq("False", False)
         self.eq("-False", True)
         self.eq("-True", False)
 
@@ -76,6 +77,12 @@ class TestBaseComparisons(BaseTest):
         self.eq("True==True", True)
         self.eq("False==False", True)
         self.eq("False==True", False)
+
+    def test_bool_math(self):
+        self.eq("True-True", False)
+        self.eq("True+True", 2)
+        self.eq("False+True", True)
+        self.eq("False-True", -1)
 
     def test_bool_neq_comp(self):
         self.eq("True!=False", True)

@@ -29,7 +29,7 @@ class TestExpressions(BaseTest):
 
     def test_when_expr(self):
         self.eq("when 2==2 32 else 64", 32)
-    
+
     def test_illegal_when(self):
         self.ex("when 2==2 1 else False", AkiTypeException)
         self.ex("when 32 1 else False", AkiTypeException)

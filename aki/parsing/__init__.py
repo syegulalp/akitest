@@ -3,6 +3,9 @@ from lark import Lark, Transformer, logger
 
 logger.setLevel(logging.DEBUG)
 from akiast import (
+    Call,
+    VarRef,
+    Immediate,
     Boolean,
     BinOp,
     UnOp,
@@ -22,9 +25,6 @@ from akiast import (
 
 def pos(n):
     return (n.line, n.column)
-
-def _p(n, value = None):
-    return (n[0].line, n[0].column), n[0].value if not value else value
 
 
 def _p(n, value=None):
@@ -46,6 +46,7 @@ class T(Transformer):
 
     def float32(self, node):
         return Float32(*_p(node))
+
     def float64(self, node):
         return Float64(*_p(node))
 
@@ -78,7 +79,16 @@ class T(Transformer):
     def funcdef(self, node):
         p = _p(node)
         name = Name(*p)
-        return Function(p[0], name, [], None, node[2])
+        body = node[2]
+        if not isinstance(body, list):
+            body = [body]
+        return Function(p[0], name, [], None, body)
+
+    def call(self, node):
+        return Call(pos(node[0]), node[0], [])
+
+    def var_ref(self, node):
+        return VarRef(*_p(node))
 
     def statements(self, node):
         return node
@@ -89,6 +99,10 @@ class T(Transformer):
     def whenexpr(self, node):
         return WhenExpr(pos(node[0]), node[0], node[1], node[2])
 
+    def immediate(self, node):
+        return Immediate(pos(node[0]), node[:])
+
+
 with open(".\\aki\\parsing\\grammar.lark") as f:
     grammar = f.read()
 
@@ -96,8 +110,8 @@ parser = Lark(
     grammar,
     parser="lalr",
     regex=True,
-    cache=".\\aki\\grammar.cache",
-    start=["start","statement"],
+    # cache=".\\aki\\grammar.cache",
+    start=["start", "immediate"],
     debug=False,
-    transformer=T()
+    transformer=T(),
 )

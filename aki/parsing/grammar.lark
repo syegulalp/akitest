@@ -1,32 +1,41 @@
+immediate: (function | exprblock)*
+
 ?start: toplevel*
 
 ?toplevel: function | decorator | exprblock
 
-?function: "def" NAME optsignature exprblock -> funcdef
-?decorator: "@" NAME optsignature exprblock -> decoratordef
-
 ?exprblock: statementblock
     | singexpr
+
+?function: "def" NAME optsignature exprblock -> funcdef
+?decorator: "@" NAME optsignature exprblock -> decoratordef
 
 ?statementblock: "{" statements "}"
 ?statements: statement*
 
-?statement: "if" exprblock exprblock ("else" exprblock)? -> ifexpr
-    | "when" exprblock exprblock ("else" exprblock)? -> whenexpr
-    | "return" exprblock -> return
-    | "while" exprblock exprblock -> whileexpr
-    | "for" NAME "in" exprblock exprblock -> forexpr
-    | "with" NAME "as" exprblock exprblock ->withexpr
+?statement: function
+    | atom_expr "=" exprblock -> assignment
+    | singexpr
+
+?singexpr: expression ";"?
+
+// expressions that return no value
+
+?nonvalue: "return" exprblock -> return
     | "break" (NAME)? -> break
     | "continue" (NAME)? ->continue
-    | atom_expr "=" exprblock -> assignment
-    | expression
 
-?singexpr: expression
-
-?expression: comparison
+// expressions that return a value
+   
+?expression: "if" exprblock exprblock ("else" exprblock)? -> ifexpr
+    | "when" exprblock exprblock ("else" exprblock)? -> whenexpr
+    | "while" exprblock exprblock -> whileexpr
+    | "for" NAME "in" exprblock exprblock -> forexpr
+    | "with" NAME "as" exprblock exprblock -> withexpr
+    | nonvalue
+    | comparison
     | expression comparisons comparison -> compop
-    
+        
 !comparisons: "==" | "!=" | ">=" | "<=" | ">" | "<"
 
 ?comparison: product
@@ -50,7 +59,7 @@
     | atom
 
 ?atom: number
-    | NAME -> var
+    | NAME -> var_ref
     | "(" expression ")"
     | dict
     | list
@@ -67,7 +76,7 @@ number: FLOAT16 -> float16
 
 ?optsignature: (signature)?
 
-?signature: "(" (vardec ("," vardec)?)? ")" (varsig)?
+?signature: "(" (vardec ("," vardec)?)? ")" varsig?
 ?vardec: NAME (varsig)?
 ?varsig: ":" vartype
 ?vartype: NAME
