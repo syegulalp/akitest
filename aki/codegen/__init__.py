@@ -1,90 +1,237 @@
 from lark import Token
-from akitypes import Integer, Boolean, SignedInteger, UnsignedInteger, Float64, Float32, Float16
+from akiast import Function, Immediate, Call, Name
+from akitypes import (
+    AkiTypeBase,
+    Boolean,
+    SignedInteger,
+    UnsignedInteger,
+    Float64,
+    Float32,
+    Float16,
+)
 from llvmlite import ir
 from errors import AkiTypeException
 
 
 class Codegen:
     def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.module = ir.Module()
+        self.func_context = None
+        self._anon_counter = 0
+
+    def anon_counter(self):
+        return f"ANONYMOUS_{self._anon_counter}"
+
+    def gen(self, ast):
+        if isinstance(ast, Immediate):
+            return self.gen_immediate(ast.nodes)
+        return self.gen_module(ast)
+
+    def gen_module(self, ast):
+        self.reset()
         pass
 
-    def reset(self, main_func="main"):
-        self.module = ir.Module()
-        main_func_type = ir.FunctionType(ir.IntType(64), [])
-        self.main_func = ir.Function(self.module, main_func_type, main_func)
-        main_block = self.main_func.append_basic_block("entry")
-        self.builder = ir.IRBuilder(main_block)
+    def gen_immediate(self, ast):
+        self.last_statement = None
 
-    def gen(self, ast, main_func = "main"):
-        self.reset(main_func = main_func)
-        last = None
-        
-        if not isinstance(ast, list):
-            ast = [ast]
-            last = ast
-        
+        main_func_body = []
+
         for node in ast:
-            # print (node)
-            last = self.codegen(node)
+            if not isinstance(node, Function):
+                main_func_body.append(node)
+                continue
+            self.codegen(node)
 
-        if self.main_func.return_value.type != last.type:
-            self.main_func.type = ir.FunctionType(last.type, [])
-            self.main_func.return_value.type = last.type
+        if main_func_body:
+            self._anon_counter += 1
+            pos = (main_func_body[0].line, main_func_body[0].column)
+            main_func = Function(
+                pos,
+                Name(pos, self.anon_counter()),
+                [],
+                SignedInteger(64),
+                main_func_body,
+            )
 
-        self.builder.ret(last)
-        self.return_value = last
+            self.codegen(main_func)
+
+    def return_value(self, entry_point = "main"):
+        return self.module.globals[entry_point].ftype.return_type
 
     def codegen(self, node):
         return getattr(self, f"codegen_{node.__class__.__name__}")(node)
 
+    # Codegen for primitive values
+
+    def codegen_SignedInteger(self, node):
+        return SignedInteger.llvm_value(node.value, 64)
+
+    def codegen_UnsignedInteger(self, node):
+        return UnsignedInteger.llvm_value(node.value, 64)
+
+    def codegen_Float16(self, node):
+        return Float16.llvm_value(node.value)
+
+    def codegen_Float32(self, node):
+        return Float32.llvm_value(node.value)
+
+    def codegen_Float64(self, node):
+        return Float64.llvm_value(node.value)
+
+    def codegen_Boolean(self, node):
+        return Boolean.llvm_value(node.value)
+
+    # Operations
+
     def codegen_BinOp(self, node):
         lhs = self.codegen(node.lhs)
         rhs = self.codegen(node.rhs)
-        if lhs.aki != rhs.aki:
+        if lhs.type.aki != rhs.type.aki:
             raise AkiTypeException("incompatible types for op")
-        return lhs.aki.op(node.op)(lhs, rhs, self.builder)
+        return lhs.type.aki.op(node.op)(lhs, rhs, self.builder)
 
     def codegen_UnOp(self, node):
         lhs = self.codegen(node.lhs)
-        return lhs.aki.op(node.op)(lhs, self.builder)
+        return lhs.type.aki.op(node.op)(lhs, self.builder)
 
-    def codegen_Integer(self, node):
-        return Integer.llvm(node.value, 64)
+    # Control flow
+
+    def codegen_Call(self, node: Call):
+        function = self.module.globals[node.name.value]
+        result = self.builder.call(function, [])
+        result.type.aki = function.return_value.type.aki
+        return result
+
+    def codegen_Function(self, node: Function):
+
+        # set up a default return type
+        func_return_type: AkiTypeBase = SignedInteger(64)
+        func_return_type_llvm = func_return_type.llvm_type()
+
+        # set up basic function information
+        function_name = node.name.value
+        func_type = ir.FunctionType(func_return_type.llvm_type(), [])
+        func = ir.Function(self.module, func_type, function_name)
+
+        # set this function as the current one in context
+        self.func_context = func
+
+        # create our function blocks
+        entry_block = func.append_basic_block("entry")
+        start_block = func.append_basic_block("start")
+        exit_block = func.append_basic_block("exit")
+
+        # create our builder and generate the body
+        self.builder = ir.IRBuilder(entry_block)
+        self.builder.position_at_start(start_block)
+
+        body_result = None
+
+        for _ in node.body:
+            body_result = self.codegen(_)
+
+        # compare body result type to default return type
+        # correct if needed
     
-    def codegen_SignedInteger(self, node):
-        return SignedInteger.llvm(node.value, 64)
+        if func_return_type_llvm.aki != body_result.type.aki:
+            func.type = ir.FunctionType(body_result.type, [])
+            func.return_value.type = body_result.type
+            func.ftype.return_type = body_result.type
+            func_return_type_llvm = body_result.type
 
-    def codegen_UnsignedInteger(self, node):
-        return UnsignedInteger.llvm(node.value, 64)
+        # save current position
+        last_body_block = self.builder.block
 
-    def codegen_Float16(self, node):
-        return Float16.llvm(node.value)
+        # allocate space for return value in entry
+        self.builder.position_at_start(entry_block)
+        return_value = func_return_type_llvm.aki.alloca(self.builder)
+        self.builder.branch(start_block)
 
-    def codegen_Float32(self, node):
-        return Float32.llvm(node.value)
+        # save result into return value from end of body
+        self.builder.position_at_end(last_body_block)
+        self.builder.store(body_result, return_value)
+        self.builder.branch(exit_block)
 
-    def codegen_Float64(self, node):
-        return Float64.llvm(node.value)
-    
-    def codegen_Boolean(self, node):
-        return Boolean.llvm(node.value)
+        # return the return value in the exit block
+        self.builder.position_at_start(exit_block)
+        self.builder.ret(self.builder.load(return_value))
+        
+        # clear function context
+        self.func_context = None
 
-    def codegen_IfExpr(self, node):
+    def codegen_WhenExpr(self, node):
+        return self.codegen_IfExpr(node, True)
 
-        then_expr = self.codegen(node.then_expr)
-        else_expr = self.codegen(node.else_expr)
-        if then_expr.aki != else_expr.aki:
-            raise AkiTypeException("then/else expressions must yield same type")
+    def codegen_IfExpr(self, node, when_expr=False):
 
+        # if expr returns the results of the if
+        # when results the rsults of the branches
+
+        if_block = self.builder.append_basic_block("if_block")
+        then_block = self.builder.append_basic_block("then_block")
+        else_block = self.builder.append_basic_block("else_block")
+        end_block = self.builder.append_basic_block("end_block")
+
+        return_value = None
+
+        # Generate if block
+
+        self.builder.branch(if_block)
+        self.builder.position_at_start(if_block)
         if_expr = self.codegen(node.if_expr)
 
-        # coerce to boolean if not already so
-        if not isinstance(if_expr.aki, Boolean):
-            if_expr = if_expr.aki.op_BOOL(if_expr, self.builder)
+        if not when_expr:
+            return_value = if_expr.type.aki.alloca(self.builder)
+            self.builder.store(if_expr, return_value)
 
-        r = self.builder.select(if_expr, then_expr, else_expr)
-        r.aki = then_expr.aki
-        return r
+        # coerce to boolean if not already so
+        if not isinstance(if_expr.type.aki, Boolean):
+            if_expr = if_expr.type.aki.op_BOOL(if_expr, self.builder)
+
+        self.builder.cbranch(if_expr, then_block, else_block)
+
+        # Generate then block
+
+        self.builder.position_at_start(then_block)
+        then_expr = self.codegen(node.then_expr)
+
+        then_branch = self.builder.branch(end_block)
+
+        # Generate else block
+
+        self.builder.position_at_start(else_block)
+        else_expr = self.codegen(node.else_expr)
+
+        else_branch = self.builder.branch(end_block)
+
+        if then_expr.type.aki != else_expr.type.aki:
+            raise AkiTypeException("then/else expressions must yield same type")
+
+        # Store possible return values if we are in a when expression
+
+        if when_expr:
+
+            self.builder.position_at_start(if_block)
+            return_value = then_expr.type.aki.alloca(self.builder)
+
+            self.builder.position_before(then_branch)
+            self.builder.store(then_expr, return_value)
+
+            self.builder.position_before(else_branch)
+            self.builder.store(else_expr, return_value)
+
+        self.builder.position_at_start(end_block)
+
+        # Return return value
+
+        result = return_value.type.aki.load(return_value, self.builder)
+        return result
 
 
 codegen = Codegen()
+
+# .llvm_type might be a func that returns an .aki decorated type
+# types vs values

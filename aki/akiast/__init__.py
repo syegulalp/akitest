@@ -1,8 +1,10 @@
 from llvmlite.ir import IRBuilder
 
+
 class UnOps:
     class NEG:
         op = "-"
+
 
 class BinOps:
     class ADD:
@@ -10,6 +12,12 @@ class BinOps:
 
     class SUB:
         op = "-"
+
+    class MUL:
+        op = "*"
+
+    class DIV:
+        op = "/"
 
     class EQ:
         op = "=="
@@ -33,24 +41,26 @@ class BinOps:
         op = "&"
 
     class BITOR:
-        op = "|"        
+        op = "|"
 
     class BITXOR:
-        op = "^"   
+        op = "^"
 
     class RSHIFT:
-        op = ">>"   
+        op = ">>"
 
     class LSHIFT:
-        op = "<<"   
+        op = "<<"
+
 
 unops = {}
 binops = {}
 
-for _op, _Op in (unops,UnOps), (binops, BinOps):
+for _op, _Op in (unops, UnOps), (binops, BinOps):
     for _ in _Op.__dict__.values():
-        op1 = getattr(_, "op",None)
-        if not op1: continue
+        op1 = getattr(_, "op", None)
+        if not op1:
+            continue
         _op[op1] = _
 
 
@@ -64,6 +74,10 @@ class Node:
     def __repr__(self):
         raise NotImplementedError
 
+class Immediate(Node):
+    def __init__(self, pos, nodes):
+        super().__init__(pos)
+        self.nodes = nodes
 
 class Number(Node):
     def __init__(self, pos, value: str):
@@ -76,48 +90,60 @@ class Number(Node):
     def __repr__(self):
         return f"<Number: {self.value}>"
 
+
 class Float(Number):
     pass
+
 
 class Float16(Float):
     def __repr__(self):
         return f"<Float16: {self.value}>"
 
+
 class Float32(Float):
     def __repr__(self):
         return f"<Float32: {self.value}>"
+
 
 class Float64(Float):
     def __repr__(self):
         return f"<Float64: {self.value}>"
 
+
 class Integer(Number):
     def __repr__(self):
         return f"<Integer: {self.value}>"
+
 
 class SignedInteger(Integer):
     def __repr__(self):
         return f"<SignedInteger: {self.value}>"
 
+
 class UnsignedInteger(Integer):
     def __repr__(self):
         return f"<UnsignedInteger: {self.value}>"
+
+
 class Boolean(Number):
     def __repr__(self):
         return f"<Boolean: {self.value}>"
 
 
 class Name(Node):
-    def __init__(self, pos, val: str):
+    def __init__(self, pos, value: str):
         super().__init__(pos)
-        self.val = val
+        self.value = value
 
     def __eq__(self, other: Node):
-        return self.val == other.val
+        return self.value == other.value
 
     def __repr__(self):
-        return f"<Name {self.val}>"
+        return f"<Name {self.value}>"
 
+class VarRef(Name):
+    def __repr__(self):
+        return f"<VarRef {self.value}>"
 
 class Function(Node):
     def __init__(self, pos, name: str, args: list, return_type: Node, body: Node):
@@ -138,6 +164,20 @@ class Function(Node):
         return f"<Function {self.name}: {self.return_type}: {self.body}>"
 
 
+class Call(Node):
+    def __init__(self, pos, name: str, args: list):
+        super().__init__(pos)
+        self.name = name
+        self.args = args
+
+    def __eq__(self, other: Node):
+        return (
+            self.args == other.args
+        )
+
+    def __repr__(self):
+        return f"<Call {self.name}: {self.args}>"
+
 class IfExpr(Node):
     def __init__(self, pos, if_expr: Node, then_expr: Node, else_expr: Node):
         super().__init__(pos)
@@ -154,6 +194,11 @@ class IfExpr(Node):
 
     def __repr__(self):
         return f"<If {self.if_expr}: {self.then_expr}: {self.else_expr}>"
+
+
+class WhenExpr(IfExpr):
+    def __repr__(self):
+        return f"<When {self.if_expr}: {self.then_expr}: {self.else_expr}>"
 
 
 class OpNode(Node):

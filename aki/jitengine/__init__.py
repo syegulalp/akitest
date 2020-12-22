@@ -20,7 +20,11 @@ class Jit:
 
     def compile_ir(self, llvm_ir):
         # Create a LLVM module object from the IR
-        mod = llvm.parse_assembly(llvm_ir)
+        try:
+            mod = llvm.parse_assembly(llvm_ir)
+        except RuntimeError:
+            print (llvm_ir)
+            raise Exception
         mod.verify()
         # Now add the module and make sure it is ready for execution
         self.engine.add_module(mod)
@@ -31,7 +35,7 @@ class Jit:
     def execute(self, codegen, entry_point="main"):
         self.mod = self.compile_ir(str(codegen.module))
         func_ptr = self.engine.get_function_address(entry_point)
-        cfunc = CFUNCTYPE(codegen.return_value.aki.ctype)(func_ptr)
+        cfunc = CFUNCTYPE(codegen.return_value(codegen.anon_counter()).aki.ctype)(func_ptr)
         res = cfunc()
         return res
 
