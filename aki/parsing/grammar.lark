@@ -11,13 +11,13 @@ immediate: (function | exprblock)*
 ?decorator: "@" NAME optsignature exprblock -> decoratordef
 
 ?statementblock: "{" statements "}"
-?statements: statement*
+?statements: statement (";"? statement)*
 
 ?statement: function
     | atom_expr "=" exprblock -> assignment
     | singexpr
 
-?singexpr: expression ";"?
+?singexpr: expression
 
 // expressions that return no value
 
