@@ -1,3 +1,4 @@
+from lark.exceptions import UnexpectedCharacters
 from parsing import parser
 from codegen import Codegen
 from jitengine import Jit
@@ -78,7 +79,7 @@ class Repl:
     def execute(self, cmd):
         try:
             ast = parser.parse(cmd, start="immediate")
-        except lark.exceptions.UnexpectedToken as e:
+        except (lark.exceptions.UnexpectedToken, lark.exceptions.UnexpectedCharacters) as e:
             print(AkiSyntaxError(cmd, e, "unexpected token"))
             return
 
