@@ -122,6 +122,8 @@ cmd_map = {
     "h": "help",
     "help": "help",
     "?": "help",
+    ".": "reload",
+    "" : "reset"
 }
 
 cmd_descriptions = {
@@ -129,6 +131,8 @@ cmd_descriptions = {
     "test": "run test suite",
     "demo": "run demonstration",
     "help": "display this help message",
+    "reset": "reset JIT/REPL",
+    "reload": "reload REPL entirely"
 }
 
 repl = Repl()
