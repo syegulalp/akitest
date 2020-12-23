@@ -14,7 +14,6 @@ immediate: (function | exprblock)*
 ?statements: statement (";"? statement)*
 
 ?statement: function
-    | atom_expr "=" exprblock -> assignment
     | singexpr
 
 ?singexpr: expression
@@ -24,6 +23,7 @@ immediate: (function | exprblock)*
 ?nonvalue: "return" exprblock -> return
     | "break" (NAME)? -> break
     | "continue" (NAME)? ->continue
+    | atom_expr "=" exprblock -> assignment
 
 // expressions that return a value
    
@@ -31,7 +31,7 @@ immediate: (function | exprblock)*
     | "when" exprblock exprblock ("else" exprblock)? -> whenexpr
     | "while" exprblock exprblock -> whileexpr
     | "for" NAME "in" exprblock exprblock -> forexpr
-    | "with" NAME "as" exprblock exprblock -> withexpr
+    | "with" NAME "as" exprblock exprblock -> withexpr    
     | nonvalue
     | comparison
     | expression comparisons comparison -> compop
@@ -53,9 +53,9 @@ immediate: (function | exprblock)*
 
 !unops: "-"
 
-?atom_expr: atom arglist -> call
-    | atom accessor -> slice
-    | atom "." NAME -> attr 
+?atom_expr: atom_expr arglist -> call
+    | atom_expr accessor -> slice
+    | atom_expr "." NAME -> attr 
     | atom
 
 ?atom: number
@@ -82,8 +82,8 @@ number: FLOAT16 -> float16
 ?vartype: NAME
     | NAME list
 
-?arglist: "(" args ")"
-!args: (singexpr ("," singexpr)*)*
+!arglist: "(" args ")"
+?args: (singexpr ("," singexpr)*)*
 
 ?accessor: "[" (singexpr (":" singexpr (":" singexpr)?)?)? "]"
 

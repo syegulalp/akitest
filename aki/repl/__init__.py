@@ -45,12 +45,8 @@ class Repl:
         if not cmd:
             return
 
-        if cmd == "..":
-            raise ReloadException
-
         if cmd == ".":
-            print("JIT/REPL reset")
-            self.reset()
+            self.help()
             return
 
         if not cmd.startswith("."):
@@ -64,6 +60,13 @@ class Repl:
                 print(f"ERR: command not found: '{cmd}'")
             else:
                 cmd_exec(cmd, args)
+
+    def reload(self, *a):
+        raise ReloadException
+
+    def reset_jit(self, *a):
+        print("JIT/REPL reset")
+        self.reset()
 
     def quit(self, *a):
         raise QuitException
@@ -79,10 +82,18 @@ class Repl:
     def execute(self, cmd):
         try:
             ast = parser.parse(cmd, start="immediate")
-        except (lark.exceptions.UnexpectedToken, lark.exceptions.UnexpectedCharacters) as e:
+        except (
+            lark.exceptions.UnexpectedToken,
+            lark.exceptions.UnexpectedCharacters,
+        ) as e:
             print(AkiSyntaxError(cmd, e, "unexpected token"))
             return
+        except Exception:
+            import traceback
 
+            print("*** Python error:")
+            traceback.print_exc()
+            return
         try:
             self.codegen.gen(ast, cmd)
         except AkiBaseException as e:
@@ -105,6 +116,13 @@ class Repl:
             print("*** Runtime error:")
             traceback.print_exc()
             return
+        except Exception:
+            import traceback
+
+            print("*** Python error:")
+            traceback.print_exc()
+            return
+
         print(result)
 
     def demo(self, *a):
@@ -160,8 +178,8 @@ cmd_map = {
     "h": "help",
     "help": "help",
     "?": "help",
-    ".": "reload",
-    "": "reset",
+    "~": "reload",
+    ".": "reset_jit",
 }
 
 cmd_descriptions = {
@@ -170,7 +188,7 @@ cmd_descriptions = {
     "demo": "run demonstration",
     "dump": "dump current module IR to console",
     "help": "display this help message",
-    "reset": "reset JIT/REPL",
+    "reset_jit": "reset JIT/REPL",
     "reload": "reload REPL entirely",
 }
 
