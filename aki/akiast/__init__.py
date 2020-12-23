@@ -168,8 +168,20 @@ class Function(Node):
         return f"<Function {self.name}: {self.return_type}: {self.body}>"
 
 
+class Args(Node):
+    def __init__(self, pos, args: list):
+        super().__init__(pos)
+        self.args = args
+
+    def __eq__(self, other: Node):
+        return self.args == other.args
+
+    def __repr__(self):
+        return f"<Args: {self.args}>"
+
+
 class Call(Node):
-    def __init__(self, pos, name: str, args: list):
+    def __init__(self, pos, name: str, args: Args):
         super().__init__(pos)
         self.name = name
         self.args = args
@@ -220,6 +232,14 @@ class BinOp(OpNode):
 
     def __repr__(self):
         return f"<BinOp: {self.lhs} {self.op} {self.rhs}>"
+
+
+class Assignment(BinOp):
+    def __init__(self, pos, lhs: Node, rhs: Node):
+        super().__init__(pos, lhs, rhs, "=")
+
+    def __repr__(self):
+        return f"<Assignment: {self.lhs} {self.op} {self.rhs}>"
 
 
 class UnOp(OpNode):

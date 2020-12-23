@@ -130,12 +130,12 @@ class Codegen:
         if not function:
             self.err(AkiNameError, node, f"function {node.name.value} not found")
 
-        args = [self.codegen(arg) for arg in node.args]
+        args = [self.codegen(arg) for arg in node.args.args]
 
         if len(args) != len(function.args):
             self.err(
                 AkiBaseException,
-                node,
+                node.args,
                 f"function {function.name} expected at least {len(function.args)} args, got {len(args)}",
             )
 

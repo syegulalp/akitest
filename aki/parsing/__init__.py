@@ -3,10 +3,12 @@ from lark import Lark, Transformer, logger
 
 logger.setLevel(logging.DEBUG)
 from akiast import (
+    Args,
     Call,
     VarRef,
     Immediate,
     Boolean,
+    Assignment,
     BinOp,
     UnOp,
     unops,
@@ -101,6 +103,12 @@ class T(Transformer):
 
     def immediate(self, node):
         return Immediate(pos(node[0]), node)
+
+    def assignment(self, node):
+        return Assignment(pos(node[0]), node[0], node[1])
+
+    def arglist(self, node):
+        return Args(pos(node[0]), node[1])
 
     args = statements
 
