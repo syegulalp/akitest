@@ -96,12 +96,14 @@ FLOAT32.2: /\d+\.\d*_F/
 FLOAT16.2: /\d+\.\d*_H/
 INT64: /\d+/
 UINT64: /\d+_U/
-INT32: /\d+_I32/
-UINT32: /\d+_U32/
-INT16: /\d+_I16/
-UINT16: /\d+_U16/
-BYTE: /\d+_I8/
-UBYTE: /\d+_U8/
+
+// INT32: /\d+_I32/
+// UINT32: /\d+_U32/
+// INT16: /\d+_I16/
+// UINT16: /\d+_U16/
+// BYTE: /\d+_I8/
+// UBYTE: /\d+_U8/
+
 INF: ".INF"
 NAN: ".NAN"
 

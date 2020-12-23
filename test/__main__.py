@@ -10,5 +10,6 @@ def main():
     print("Starting.")
     unittest.TextTestRunner(failfast=True).run(tests)
 
+
 if __name__ == "__main__":
     main()

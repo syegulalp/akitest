@@ -45,5 +45,19 @@ class Jit:
         self.engine.remove_module(self.mod)
         self.mod = None
 
+    def load_bc(self, external, module):
+        """
+        Placeholder for loading `external` bitcode into jit
+        and optionally merging with `module` (e.g., stdlib loading)
+        """
+
+    def save_bc(self, module):
+        """
+        Placeholder to write bitcode out
+        """
+
+    def load_asm(self):
+        pass
+
 
 jit = Jit()

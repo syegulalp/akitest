@@ -1,10 +1,12 @@
 if __name__ == "__main__":
     import sys
+
     init_modules = set(sys.modules.keys())
 
     while True:
         from errors import ReloadException, QuitException
-        from repl import repl    
+        from repl import repl
+
         try:
             repl.run()
         except ReloadException:
