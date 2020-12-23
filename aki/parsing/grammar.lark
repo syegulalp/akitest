@@ -53,7 +53,7 @@ immediate: (function | exprblock)*
 
 !unops: "-"
 
-?atom_expr: atom signature -> call
+?atom_expr: atom arglist -> call
     | atom accessor -> slice
     | atom "." NAME -> attr 
     | atom
@@ -81,6 +81,9 @@ number: FLOAT16 -> float16
 ?varsig: ":" vartype
 ?vartype: NAME
     | NAME list
+
+?arglist: "(" args ")"
+!args: (singexpr ("," singexpr)*)*
 
 ?accessor: "[" (singexpr (":" singexpr (":" singexpr)?)?)? "]"
 
