@@ -85,7 +85,7 @@ class T(Transformer):
         return Function(p[0], name, [], None, body)
 
     def call(self, node):
-        return Call(pos(node[0]), node[0], [])
+        return Call(pos(node[0]), node[0], node[1])
 
     def var_ref(self, node):
         return VarRef(*_p(node))
@@ -100,7 +100,9 @@ class T(Transformer):
         return WhenExpr(pos(node[0]), node[0], node[1], node[2])
 
     def immediate(self, node):
-        return Immediate(pos(node[0]), node[:])
+        return Immediate(pos(node[0]), node)
+
+    args = statements
 
 
 with open(".\\aki\\parsing\\grammar.lark") as f:

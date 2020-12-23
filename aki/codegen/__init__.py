@@ -10,7 +10,7 @@ from akitypes import (
     Float16,
 )
 from llvmlite import ir
-from errors import AkiTypeException
+from errors import AkiBaseException, AkiNameError, AkiTypeError
 
 
 class Codegen:
@@ -22,10 +22,27 @@ class Codegen:
         self.func_context = None
         self._anon_counter = 0
 
+        # placeholder for start of stidlib generator
+        # right now we just malloc/free, but later we'll use
+        # platform-specific calls and wrap them
+
+        u64 = UnsignedInteger(64).llvm_type()
+
+        fns = (("malloc", u64, (u64,)), ("free", u64, (u64,)))
+
+        for fn_name, fn_ret, fn_args in fns:
+
+            fx = ir.Function(self.module, ir.FunctionType(fn_ret, fn_args), fn_name)
+            fx.storage_class = "extern"
+
+    def err(self, exception, node, message):
+        raise exception(self.txt, node, message)
+
     def anon_counter(self):
         return f"ANONYMOUS_{self._anon_counter}"
 
-    def gen(self, ast):
+    def gen(self, ast, txt):
+        self.txt = txt
         if isinstance(ast, Immediate):
             return self.gen_immediate(ast.nodes)
         return self.gen_module(ast)
@@ -45,18 +62,26 @@ class Codegen:
                 continue
             self.codegen(node)
 
-        if main_func_body:
-            self._anon_counter += 1
-            pos = (main_func_body[0].line, main_func_body[0].column)
-            main_func = Function(
-                pos,
-                Name(pos, self.anon_counter()),
-                [],
-                SignedInteger(64),
-                main_func_body,
-            )
+        try:
 
-            self.codegen(main_func)
+            if main_func_body:
+                self._anon_counter += 1
+                pos = (main_func_body[0].line, main_func_body[0].column)
+                main_func = Function(
+                    pos,
+                    Name(pos, self.anon_counter()),
+                    [],
+                    SignedInteger(64),
+                    main_func_body,
+                )
+
+                # TODO: unsuccessful codegen should roll back anon counter
+
+                self.codegen(main_func)
+
+        except Exception as e:
+            del self.module.globals[self.anon_counter()]
+            raise e
 
     def return_value(self, entry_point="main"):
         return self.module.globals[entry_point].ftype.return_type
@@ -90,7 +115,7 @@ class Codegen:
         lhs = self.codegen(node.lhs)
         rhs = self.codegen(node.rhs)
         if lhs.type.aki != rhs.type.aki:
-            raise AkiTypeException("incompatible types for op")
+            raise AkiTypeError(node, "incompatible types for op")
         return lhs.type.aki.op(node.op)(lhs, rhs, self.builder)
 
     def codegen_UnOp(self, node):
@@ -100,8 +125,21 @@ class Codegen:
     # Control flow
 
     def codegen_Call(self, node: Call):
-        function = self.module.globals[node.name.value]
-        result = self.builder.call(function, [])
+
+        function = self.module.globals.get(node.name.value)
+        if not function:
+            self.err(AkiNameError, node, f"function {node.name.value} not found")
+
+        args = [self.codegen(arg) for arg in node.args]
+
+        if len(args) != len(function.args):
+            self.err(
+                AkiBaseException,
+                node,
+                f"function {function.name} expected at least {len(function.args)} args, got {len(args)}",
+            )
+
+        result = self.builder.call(function, args)
         result.type.aki = function.return_value.type.aki
         return result
 
@@ -208,7 +246,11 @@ class Codegen:
         else_branch = self.builder.branch(end_block)
 
         if then_expr.type.aki != else_expr.type.aki:
-            raise AkiTypeException("then/else expressions must yield same type")
+            self.err(
+                AkiTypeError,
+                node.then_expr,
+                "then/else expressions must yield same type",
+            )
 
         # Store possible return values if we are in a when expression
 

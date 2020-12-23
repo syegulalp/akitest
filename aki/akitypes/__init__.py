@@ -2,7 +2,7 @@ from llvmlite.ir.types import IntType, DoubleType, FloatType, HalfType
 from llvmlite.ir import Constant, IRBuilder, Value, Type
 from akiast import UnOps, BinOps, OpNode
 from ctypes import c_bool, c_double, c_float, c_uint16, c_int64, c_uint64
-from errors import AkiTypeException
+from errors import AkiTypeError
 
 
 class AkiTypeBase:
@@ -12,11 +12,6 @@ class AkiTypeBase:
 
     def op(self, optype: OpNode):
         return getattr(self, f"op_{optype.__name__}")
-
-    # def _zext(self, value: Value, target_type: "AkiTypeBase", builder: IRBuilder):
-    #     f1 = builder.zext(value, target_type.llvm_type())
-    #     f1.aki = target_type
-    #     return f1
 
     def __repr__(self):
         return f"<{self.typename}>"
@@ -214,6 +209,11 @@ class Boolean(IntegerBase):
         f2.type.aki = target_type
         return target_type.op_SUB(f1, f2, builder)
 
+    def op_DIV(self, lhs: Value, rhs: Value, builder: IRBuilder):
+        f = builder.udiv(lhs, rhs)
+        f.type.aki = Bool
+        return f
+
     def op_EQ(self, lhs: Value, rhs: Value, builder: IRBuilder):
         f = builder.icmp_unsigned(BinOps.EQ.op, lhs, rhs)
         f.type.aki = Bool
@@ -273,7 +273,7 @@ class UnsignedInteger(IntegerBase):
         return f
 
     def op_NEG(self, lhs: Value, builder: IRBuilder):
-        raise AkiTypeException("unsigned values can't be negated")
+        raise AkiTypeError("unsigned values can't be negated")
 
     def op_RSHIFT(self, lhs: Value, rhs: Value, builder: IRBuilder):
         f = builder.lshr(lhs, rhs)

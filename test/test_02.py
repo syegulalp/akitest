@@ -1,5 +1,5 @@
 from utils import BaseTest
-from errors import AkiTypeException
+from errors import AkiTypeError
 
 
 class TestExpressions(BaseTest):
@@ -23,13 +23,13 @@ class TestExpressions(BaseTest):
         self.eq("if 0.0_F 1 else 0", 0)
 
     def test_illegal_if(self):
-        self.ex("if 2==True 1 else 0", AkiTypeException)
-        self.ex("if 2==True 1 else False", AkiTypeException)
-        self.ex("if 2==2 1 else False", AkiTypeException)
+        self.ex("if 2==True 1 else 0", AkiTypeError)
+        self.ex("if 2==True 1 else False", AkiTypeError)
+        self.ex("if 2==2 1 else False", AkiTypeError)
 
     def test_when_expr(self):
         self.eq("when 2==2 32 else 64", 32)
 
     def test_illegal_when(self):
-        self.ex("when 2==2 1 else False", AkiTypeException)
-        self.ex("when 32 1 else False", AkiTypeException)
+        self.ex("when 2==2 1 else False", AkiTypeError)
+        self.ex("when 32 1 else False", AkiTypeError)

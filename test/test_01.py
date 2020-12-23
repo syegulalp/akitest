@@ -1,5 +1,5 @@
 from utils import BaseTest
-from errors import AkiTypeException
+from errors import AkiTypeError
 from math import isnan, isinf
 
 all_binops = ("==", "!=", ">=", "<=", ">", "<")
@@ -71,18 +71,23 @@ class TestBaseOperations(BaseTest):
         self.eq("2.*2.", 4.0)
         self.eq("4./2.", 2.0)
 
+    def test_bool_math(self):
+        self.eq("True-True", False)
+        self.eq("True+True", 2)
+        self.eq("False+True", True)
+        self.eq("False-True", -1)
+        self.eq("True*True", True)
+        self.eq("True*False", False)
+        self.eq("False/True", False)
+        # TODO: division by zero trapping
+        self.eq("True/False", False)
+
 
 class TestBaseComparisons(BaseTest):
     def test_bool_eq_comp(self):
         self.eq("True==True", True)
         self.eq("False==False", True)
         self.eq("False==True", False)
-
-    def test_bool_math(self):
-        self.eq("True-True", False)
-        self.eq("True+True", 2)
-        self.eq("False+True", True)
-        self.eq("False-True", -1)
 
     def test_bool_neq_comp(self):
         self.eq("True!=False", True)
@@ -122,7 +127,7 @@ class TestBaseComparisons(BaseTest):
 
     def test_illegal_comparison(self):
         for op in all_binops:
-            self.ex(f"2{op}True", AkiTypeException)
+            self.ex(f"2{op}True", AkiTypeError)
 
 
 class TestBindings(BaseTest):

@@ -1,11 +1,12 @@
 from parsing import parser
 from codegen import Codegen
 from jitengine import Jit
-from errors import ReloadException, QuitException
+from errors import ReloadException, QuitException, AkiBaseException, AkiSyntaxError
 import os
 import textwrap
 from itertools import zip_longest
 from functools import lru_cache
+import lark
 
 
 class Repl:
@@ -38,6 +39,11 @@ class Repl:
             print("»", cmd_input)
             cmd = cmd_input
 
+        cmd = cmd.strip()
+
+        if not cmd:
+            return
+
         if cmd == "..":
             raise ReloadException
 
@@ -67,11 +73,37 @@ class Repl:
         tests = unittest.TestLoader().discover(".\\test", pattern="test_*.py")
         unittest.TextTestRunner(failfast=True).run(tests)
 
+    # TODO:
+
     def execute(self, cmd):
-        ast = parser.parse(cmd, start="immediate")
-        self.codegen.gen(ast)
+        try:
+            ast = parser.parse(cmd, start="immediate")
+        except lark.exceptions.UnexpectedToken as e:
+            print(AkiSyntaxError(cmd, e, "unexpected token"))
+            return
+
+        try:
+            self.codegen.gen(ast, cmd)
+        except AkiBaseException as e:
+            print(e)
+            return
+        except Exception:
+            import traceback
+
+            print("*** Python error:")
+            traceback.print_exc()
+            return
+
         entry = self.codegen.anon_counter()
-        result = self.jit.execute(self.codegen, entry_point=entry)
+
+        try:
+            result = self.jit.execute(self.codegen, entry_point=entry)
+        except RuntimeError as e:
+            import traceback
+
+            print("*** Runtime error:")
+            traceback.print_exc()
+            return
         print(result)
 
     def demo(self, *a):
@@ -79,6 +111,9 @@ class Repl:
 
         for command in commands:
             self.command(command)
+
+    def dump(self, *a):
+        print(str(self.codegen.module))
 
     def help(self, *a):
         print(self._help())
@@ -119,16 +154,23 @@ cmd_map = {
     "test": "test",
     "demo": "demo",
     "d": "demo",
+    "x": "dump",
+    "dump": "dump",
     "h": "help",
     "help": "help",
     "?": "help",
+    ".": "reload",
+    "": "reset",
 }
 
 cmd_descriptions = {
     "quit": "exit REPL",
     "test": "run test suite",
     "demo": "run demonstration",
+    "dump": "dump current module IR to console",
     "help": "display this help message",
+    "reset": "reset JIT/REPL",
+    "reload": "reload REPL entirely",
 }
 
 repl = Repl()

@@ -15,7 +15,7 @@ class BaseTest(unittest.TestCase):
         ast = parser.parse(command, start="immediate")
         codegen.reset()
         # main_func_name = f"main_{BaseTest.incr}"
-        codegen.gen(ast)
+        codegen.gen(ast, command)
         # print (str(codegen.module))
         # print (codegen.return_value.aki)
         result = jit.execute(codegen, entry_point=codegen.anon_counter())
